@@ -16,6 +16,10 @@ Open `http://localhost:8000` on the same computer. Alternatively, serve this dir
 
 You can also open `index.html` directly for the basic app. Service workers and phone installation require HTTPS or localhost. Browser storage is scoped to the address you open; export and import a backup when moving between file, localhost, and a deployed address.
 
+## Update an existing localhost copy
+
+A GitHub push does not update a folder you downloaded earlier. Download the latest `main` ZIP and extract it, or run `git pull` in a Git clone. Stop the old Python server, start it from the updated folder using the same port, and reopen the exact same address (`http://localhost:8000/`). Reload once, wait briefly for the new offline worker, then reload again if the old interface remains. Do not clear site data: the personal records belong to the browser origin and survive replacement of application files. Export a backup before switching addresses or ports.
+
 ## Install on a phone
 
 Host the **entire directory**, including `vendor/` and `data/`, on an HTTPS static host. Visit it once online and allow the offline cache to finish.
@@ -62,7 +66,7 @@ Local browser storage and exported backups are **not encrypted**. Use a trusted 
 
 `index.html` contains independent service objects: `prayerService`, `hijriService`, `hadithService`, `quranService`, `adhkarService`, `storage`, `engine`, and `ui`. This keeps the application portable to a later component/server architecture. `window.Istiqamah` exposes the core services for integration tests. Imported data is shape-checked; user-entered text is escaped before HTML rendering. Dates are stored as local calendar keys in the selected timezone; exported schedule events are converted to UTC, including events close to midnight.
 
-`sw.js` caches the complete shell and bundled data. Increment its cache version when shipping changed assets; reload after the new worker is installed. Offline data persists independently of the shell cache.
+`sw.js` caches the complete shell and bundled data. Increment its cache version when shipping changed assets; reload after the new worker is installed. Online page reloads request fresh HTML and update the cached offline copy. Settings → Install app → Check for updates also checks the worker and reloads. Offline personal data persists independently of the shell cache.
 
 ## Development and tests
 
@@ -88,4 +92,4 @@ Tests use `/usr/bin/chromium` when present, or Playwright's installed Chromium. 
 
 ## Validation recorded for this release
 
-A clean `npm ci` and all **22 Chromium browser checks** passed. An actual PDF export was additionally generated and inspected: **two A4 landscape pages** for the default plan. Mobile English and Arabic layouts were visually inspected at 390 × 844, with no horizontal overflow. Direct `file://` navigation is blocked by the managed test browser's policy, so the verified opening route is the local static server above. No deployment or environment publication was performed.
+A clean `npm ci` and all **23 Chromium browser checks** passed. An actual PDF export was additionally generated and inspected: **two A4 landscape pages** for the default plan. Mobile English and Arabic layouts were visually inspected at 390 × 844, with no horizontal overflow. Direct `file://` navigation is blocked by the managed test browser's policy, so the verified opening route is the local static server above. No deployment or environment publication was performed.
