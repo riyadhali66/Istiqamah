@@ -1923,6 +1923,13 @@ Another tab changed your data. Reload to see the latest records.|\u063A\u064A\u0
   let [en, ar, ur] = line.split("|");
   translations[en] = { ar, ur };
 });
+Object.assign(translations, {
+  "Choose adhkar": { ar: "اختر الذكر", ur: "ذکر منتخب کریں" },
+  "Free counter": { ar: "عداد حر", ur: "آزاد گنتی" },
+  "Next dhikr": { ar: "الذكر التالي", ur: "اگلا ذکر" },
+  "Linked habit": { ar: "العادة المرتبطة", ur: "منسلک عادت" },
+  "Shared with your daily adhkar checklist.": { ar: "تُحفظ التكرارات في قائمة أذكارك اليومية أيضًا.", ur: "یہ گنتی آپ کی روزانہ اذکار کی فہرست میں بھی محفوظ ہوتی ہے۔" }
+});
 let lang = "en";
 const t = (s) => translations[s]?.[lang] || s;
 const CATEGORIES = ["Faith", "Health & Fitness", "Wealth & Career", "Debt Freedom", "Skills", "Language Learning", "Family", "Mental Wellbeing"];
@@ -1967,7 +1974,7 @@ function validate(s) {
     return false;
   }
   if (!record(s.days, 5e4, (d, k) => date(k) && obj(d) && record(d.values || {}, 150, (v) => num(v, 0, 1e6)) && (!d.snapshot || list(d.snapshot, 100, habit)) && num(d.mood || 0, 0, 5) && num(d.stress || 0, 0, 5) && record(d.journal || {}, 3, (v) => text(v, 1e5)) && record(d.adhkar || {}, 200, (v) => num(v, 0, 1e4)) && record(d.kids || {}, 15, (v) => record(v, 5, (x) => typeof x === "boolean")))) return false;
-  if (!obj(s.settings) || !["light", "dark"].includes(s.settings.theme) || !["silent", "makkah", "mishary"].includes(s.settings.sound) || !obj(s.tasbih) || !num(s.tasbih.count, 0, 1e12) || ![33, 100].includes(s.tasbih.goal) || !record(s.reviews, 1e3, (r) => record(r, 10, (v) => text(v, 1e5))) || !record(s.savings, 1e3, (v) => num(v)) || !record(s.zakat, 8, (v) => num(v))) return false;
+  if (!obj(s.settings) || !["light", "dark"].includes(s.settings.theme) || !["silent", "makkah", "mishary"].includes(s.settings.sound) || !obj(s.tasbih) || !num(s.tasbih.count, 0, 1e12) || (s.tasbih.selected != null && !(text(s.tasbih.selected, 20) && /^(?:(?:morning|evening)-\d{1,2})?$/.test(s.tasbih.selected))) || ![33, 100].includes(s.tasbih.goal) || !record(s.reviews, 1e3, (r) => record(r, 10, (v) => text(v, 1e5))) || !record(s.savings, 1e3, (v) => num(v)) || !record(s.zakat, 8, (v) => num(v))) return false;
   return true;
 }
 let state = storage.load();
@@ -2295,14 +2302,21 @@ const hadithService = { providers: { open: { get: () => contentService.daily("ha
 } };
 const adhkarService = { list(period) {
   return (window.SOURCE_DATA?.adhkar || []).filter((a) => a.category === (period === "morning" ? "\u0623\u0630\u0643\u0627\u0631 \u0627\u0644\u0635\u0628\u0627\u062D" : "\u0623\u0630\u0643\u0627\u0631 \u0627\u0644\u0645\u0633\u0627\u0621"));
-}, increment(period, i) {
-  let d = getDay();
+}, increment(period, i, dayKey = selectedDate) {
+  let d = getDay(dayKey);
   let a = this.list(period)[i], key = period + "-" + i;
   d.adhkar[key] = Math.min(a.count, (d.adhkar[key] || 0) + 1);
   const all = this.list(period), total = all.reduce((s, a2, i2) => s + Math.min(a2.count, d.adhkar[period + "-" + i2] || 0), 0);
   if (total === all.reduce((s, a2) => s + a2.count, 0)) d.values[period === "morning" ? "adhkar-am" : "adhkar-pm"] = 1;
   save();
 } };
+function tasbihSelection() {
+  const match = /^(morning|evening)-(\d{1,2})$/.exec(state.tasbih.selected || "");
+  if (!match) return null;
+  const period = match[1], index = Number(match[2]), entry = adhkarService.list(period)[index];
+  return entry ? { period, index, entry, key: period + "-" + index } : null;
+}
+
 function currentSchedule(key) {
   const prayers = prayerService.calculate(key), p = state.profile;
   const tm = (date) => new Intl.DateTimeFormat("en-GB", { timeZone: p.tz || timezone(), hour: "2-digit", minute: "2-digit", hour12: false }).format(date);
@@ -2389,7 +2403,18 @@ const ui = {
     return this.heading(t("My toolkit"), "Small deeds. Every day. Limitless results.") + `<div class="tabs">${tabs.map(([id, title]) => `<button class="tab ${tool === id ? "active" : ""}" data-action="tool" data-id="${id}">${t(title)}</button>`).join("")}</div>` + ({ tasbih: () => this.tasbih(), wealth: () => this.wealth(), fasting: () => this.fasting(), words: () => this.words(), kids: () => this.kids() }[tool] || (() => this.tasbih()))();
   },
   tasbih() {
-    return `<section class="card center"><span class="eyebrow">${t("Tasbih")}</span><h2 style="margin-top:12px">${t("One small step, a little closer.")}</h2><button class="tasbih-button" data-action="tasbih" aria-label="${t("Tasbih")}: ${state.tasbih.count}">${state.tasbih.count}</button><p class="muted">${t("Target")}: ${state.tasbih.goal} \xB7 ${state.tasbih.count ? Math.floor(state.tasbih.count / state.tasbih.goal) : 0} ${t("completed")}</p><div class="row" style="justify-content:center;margin:20px 0"><button class="btn secondary" data-action="tasbih-goal" data-value="33">33</button><button class="btn secondary" data-action="tasbih-goal" data-value="100">100</button><button class="linkbtn" data-action="tasbih-reset">${t("Reset counter")}</button></div><label class="sr-only" for="tasbih-link">${t("Adhkar")}</label><select id="tasbih-link" style="max-width:320px"><option value="">${t("Adhkar")} \xB7 ${t("Optional")}</option>${state.habits.filter((h) => h.category === "Faith" && !h.prayer).map((h) => `<option value="${esc(h.id)}" ${state.tasbih.link === h.id ? "selected" : ""}>${esc(t(h.label))}</option>`).join("")}</select><div class="privacy">${t("Saved on this device")} \xB7 33 / 100</div></section>`;
+    const selected = tasbihSelection();
+    const count = selected ? getDay(today()).adhkar[selected.key] || 0 : state.tasbih.count;
+    const goal = selected ? selected.entry.count : state.tasbih.goal;
+    const done = selected && count >= goal;
+    return `<section class="card center"><span class="eyebrow">${t("Tasbih")}</span><h2 style="margin-top:12px">${t("One small step, a little closer.")}</h2>
+      <div style="max-width:600px;margin:24px auto 0;text-align:start"><label for="tasbih-adhkar">${t("Choose adhkar")}</label>
+      <select id="tasbih-adhkar"><option value="">${t("Free counter")}</option>${["morning", "evening"].map(period => `<optgroup label="${t(period === "morning" ? "Morning adhkar" : "Evening adhkar")}">${adhkarService.list(period).map((a, i) => `<option value="${period}-${i}" ${selected?.key === period + "-" + i ? "selected" : ""}>${i + 1}. ${esc(a.text.replace(/\s+/g, " ").slice(0, 85))}${a.text.length > 85 ? "…" : ""} · ${a.count}</option>`).join("")}</optgroup>`).join("")}</select></div>
+      ${selected ? `<article style="max-width:700px;margin:22px auto;text-align:start"><span class="badge">${t(selected.period === "morning" ? "Morning adhkar" : "Evening adhkar")}</span><p class="quote" lang="ar" dir="rtl" style="white-space:pre-line;overflow-wrap:anywhere;margin-top:18px">${esc(selected.entry.text)}</p><span class="source" lang="ar" dir="rtl">${esc(selected.entry.reference)}</span><small>${t("Arabic source text")} · Azkar DB</small></article>` : ""}
+      <button class="tasbih-button" data-action="tasbih" aria-label="${t("Tasbih")}: ${count} / ${goal}" ${done ? "disabled" : ""}>${count}</button><p class="muted">${t("Target")}: ${goal} · ${selected ? `${Math.min(count, goal)} / ${goal} ${t("completed")}` : `${count ? Math.floor(count / goal) : 0} ${t("completed")}`}</p>
+      <div class="row wrap" style="justify-content:center;margin:20px 0">${selected ? `<button class="btn secondary" data-action="tasbih-next">${t("Next dhikr")} ${icon("arrow")}</button>` : `<button class="btn secondary" data-action="tasbih-goal" data-value="33">33</button><button class="btn secondary" data-action="tasbih-goal" data-value="100">100</button>`}<button class="linkbtn" data-action="tasbih-reset">${t("Reset counter")}</button></div>
+      ${selected ? `<p class="subtle">${t("Shared with your daily adhkar checklist.")}</p>` : `<label for="tasbih-link">${t("Linked habit")} · ${t("Optional")}</label><select id="tasbih-link" style="max-width:320px"><option value="">${t("Optional")}</option>${state.habits.filter(h => h.category === "Faith" && !h.prayer).map(h => `<option value="${esc(h.id)}" ${state.tasbih.link === h.id ? "selected" : ""}>${esc(t(h.label))}</option>`).join("")}</select>`}
+      <div class="privacy">${t("Saved on this device")} · ${today()}</div></section>`;
   },
   wealth() {
     let total = state.debts.reduce((s, d) => s + d.total, 0), paid = state.debts.reduce((s, d) => s + d.paid, 0), percent = total ? Math.round(paid / total * 100) : 0;
@@ -2830,23 +2855,46 @@ document.addEventListener("click", async (e) => {
       save();
       render();
       break;
-    case "tasbih":
-      state.tasbih.count++;
-      if ([33, 100].includes(state.tasbih.count) || state.tasbih.count % state.tasbih.goal === 0) {
-        navigator.vibrate?.(150);
-        if (state.tasbih.link) {
-          let h = state.habits.find((h2) => h2.id === state.tasbih.link);
-          if (h) getDay(today()).values[h.id] = h.target;
+    case "tasbih": {
+      const selected = tasbihSelection();
+      if (selected) {
+        const previous = getDay(today()).adhkar[selected.key] || 0;
+        if (previous >= selected.entry.count) break;
+        adhkarService.increment(selected.period, selected.index, today());
+        const count = getDay(today()).adhkar[selected.key];
+        if ([33, 100].includes(count) || count === selected.entry.count) navigator.vibrate?.(150);
+      } else {
+        state.tasbih.count++;
+        if ([33, 100].includes(state.tasbih.count) || state.tasbih.count % state.tasbih.goal === 0) {
+          navigator.vibrate?.(150);
+          if (state.tasbih.link) {
+            let h = state.habits.find(h => h.id === state.tasbih.link);
+            if (h) getDay(today()).values[h.id] = h.target;
+          }
         }
       }
       save();
       render();
       break;
-    case "tasbih-reset":
-      state.tasbih.count = 0;
+    }
+    case "tasbih-next": {
+      const selected = tasbihSelection();
+      if (selected) state.tasbih.selected = selected.period + "-" + ((selected.index + 1) % adhkarService.list(selected.period).length);
       save();
       render();
       break;
+    }
+    case "tasbih-reset": {
+      const selected = tasbihSelection();
+      if (selected) {
+        const d = getDay(today());
+        d.adhkar[selected.key] = 0;
+        d.values[selected.period === "morning" ? "adhkar-am" : "adhkar-pm"] = 0;
+      } else state.tasbih.count = 0;
+      save();
+      render();
+      break;
+    }
     case "tasbih-goal":
       state.tasbih.goal = +value;
       save();
@@ -3116,6 +3164,11 @@ document.addEventListener("change", async (e) => {
     case "sound-select":
       state.settings.sound = el.value;
       save();
+      break;
+    case "tasbih-adhkar":
+      state.tasbih.selected = el.value;
+      save();
+      render();
       break;
     case "tasbih-link":
       state.tasbih.link = el.value;
