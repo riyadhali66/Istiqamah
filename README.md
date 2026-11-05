@@ -4,6 +4,19 @@
 
 A private, local-first Muslim life companion. The application, styles, and application JavaScript are in `index.html`. Small companion files provide installable PWA support, local fonts, libraries, and attributed offline religious content. No login, application backend, AI API, build step, or runtime package installation is required.
 
+## 🤝 Help improve Istiqamah
+
+Istiqamah is free and open source. We hope it becomes sadaqah jariyah for everyone who helps build it. You don't need to be a programmer to contribute:
+
+- **Use it and give feedback:** try it for a week and [share what to improve](../../issues/new/choose).
+- **Check the religious content:** report any wrong reference, grade or count with your source. These reports get top priority.
+- **Translate:** improve the Arabic, Urdu, Malayalam or Hindi text, or add a new language.
+- **Test on your phone:** Android and iPhone reports with screenshots help a lot.
+- **Write code:** fix bugs, improve accessibility, or help with v2 (accounts, cloud sync, push notifications).
+- **Star ⭐ the repository and share it** with someone who could benefit.
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. JazakAllahu khairan 🤲
+
 ## Open it
 
 From this directory:
@@ -93,3 +106,7 @@ Tests use `/usr/bin/chromium` when present, or Playwright's installed Chromium. 
 ## Validation recorded for this release
 
 A clean `npm ci` and all **23 Chromium browser checks** passed. An actual PDF export was additionally generated and inspected: **two A4 landscape pages** for the default plan. Mobile English, Arabic, Urdu, Malayalam, and Hindi layouts were visually inspected at 390 × 844, with no horizontal overflow. Direct `file://` navigation is blocked by the managed test browser's policy, so the verified opening route is the local static server above. No deployment or environment publication was performed.
+
+## License
+
+The Istiqamah application code is released under the [MIT License](LICENSE). Third-party libraries, fonts, religious texts and audio in `vendor/` and `data/` keep their own licenses and terms, as listed in [SOURCE-NOTICES.md](SOURCE-NOTICES.md).
