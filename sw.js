@@ -1,5 +1,5 @@
 'use strict';
-const CACHE = 'istiqamah-v1-20261105-d';
+const CACHE = 'istiqamah-v1-20261105-e';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './vendor/adhan.js', './vendor/arabic-core.js', './vendor/chart.js', './vendor/inter.woff2', './vendor/amiri.woff2', './vendor/uthmani.woff2', './data/content.js', './data/adhan-makkah.mp3', './data/adhan-mishary.mp3'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));

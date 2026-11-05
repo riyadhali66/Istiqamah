@@ -35,7 +35,7 @@ Open **Progress**, choose a month, then select **Print / Save as PDF**. Alternat
 
 ## What works
 
-- Eight skippable onboarding steps; English, Arabic, and Urdu interfaces with RTL layout; ranked goals, individual goal descriptions, children, work situation, struggles, faith practices, daily rhythm, optional debts, and three commitment levels.
+- Eight skippable onboarding steps; English, Arabic, Urdu, Malayalam, and Hindi interfaces (with RTL layout for Arabic/Urdu and LTR for English/Malayalam/Hindi); ranked goals, individual goal descriptions, children, work situation, struggles, faith practices, daily rhythm, optional debts, and three commitment levels.
 - Local rule-based plans for debt repayment, business development, job searching, study, health, language learning, parenting, stress, sleep, and faith. The five prayers have separate check-ins and count as one habit group when describing commitment levels. Gentle has five groups, Balanced ten, and Full power at least fifteen groups.
 - Local Adhan JS prayer calculations using city presets, manually entered coordinates, or optional device geolocation; country-appropriate method suggestions, Shafi/Hanafi Asr, explicit IANA timezone, and next-prayer countdown. No location is transmitted to a prayer API.
 - Daily numeric and checkbox habits, water glasses, mood and stress, journal entries, prayer/fasting pauses, weighted scores, actual streaks, and optional habit suggestions after seven active days. Prayer weights are three times ordinary habits. Scores use capped completion ratios. Paused prayer/fasting habits are excluded, and paused prayer days preserve existing prayer streaks.
@@ -92,4 +92,4 @@ Tests use `/usr/bin/chromium` when present, or Playwright's installed Chromium. 
 
 ## Validation recorded for this release
 
-A clean `npm ci` and all **23 Chromium browser checks** passed. An actual PDF export was additionally generated and inspected: **two A4 landscape pages** for the default plan. Mobile English and Arabic layouts were visually inspected at 390 × 844, with no horizontal overflow. Direct `file://` navigation is blocked by the managed test browser's policy, so the verified opening route is the local static server above. No deployment or environment publication was performed.
+A clean `npm ci` and all **23 Chromium browser checks** passed. An actual PDF export was additionally generated and inspected: **two A4 landscape pages** for the default plan. Mobile English, Arabic, Urdu, Malayalam, and Hindi layouts were visually inspected at 390 × 844, with no horizontal overflow. Direct `file://` navigation is blocked by the managed test browser's policy, so the verified opening route is the local static server above. No deployment or environment publication was performed.
