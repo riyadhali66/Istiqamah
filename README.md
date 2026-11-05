@@ -2,6 +2,10 @@
 
 **Small deeds. Every day. Limitless results.**
 
+### 🌐 Try it now: **[riyadhali66.github.io/Istiqamah](https://riyadhali66.github.io/Istiqamah/)**
+
+Free, with no login and no ads. Works offline after the first visit. Available in English, العربية, اردو, മലയാളം and हिन्दी.
+
 A private, local-first Muslim life companion. The application, styles, and application JavaScript are in `index.html`. Small companion files provide installable PWA support, local fonts, libraries, and attributed offline religious content. No login, application backend, AI API, build step, or runtime package installation is required.
 
 ## 🤝 Help improve Istiqamah
@@ -35,10 +39,17 @@ A GitHub push does not update a folder you downloaded earlier. Download the late
 
 ## Install on a phone
 
-Host the **entire directory**, including `vendor/` and `data/`, on an HTTPS static host. Visit it once online and allow the offline cache to finish.
+The app is live at **https://riyadhali66.github.io/Istiqamah/**, deployed with GitHub Pages from the `main` branch.
 
-- **Android / Chrome:** browser menu → Install app, or Settings → Install app.
-- **iPhone / Safari:** Share → Add to Home Screen → Open as Web App.
+1. **Open the link on your phone:** use **Google Chrome** on Android or **Safari** on iPhone.
+2. **Install it:**
+   - **Android (Chrome):** tap the **three dots (⋮)** at the top right → **Install app** (or **Add to Home Screen**).
+   - **iPhone (Safari):** tap the **Share** icon (square with an up arrow) at the bottom → **Add to Home Screen**.
+3. **Open Istiqamah from your home screen.** It opens full-screen with no address bar. Choose your language (English, العربية, اردو, മലയാളം or हिन्दी) in the setup wizard or later in **Settings**.
+
+Stay online the first time you open it, so the offline cache can finish. After that, the app works offline.
+
+To host your own copy, serve the **entire directory**, including `vendor/` and `data/`, from any HTTPS static host.
 
 After installation, reopen it from the home screen. The app, prayer calculations, Hijri calendar, charts, all bundled readings, and both adhan recordings work offline. Verse recitation streams from EveryAyah when first played and is cached when the browser permits. External commentary links need a connection.
 
