@@ -6,7 +6,7 @@
 
 Free, with no login and no ads. Works offline after the first visit. Available in English, العربية, اردو, മലയാളം and हिन्दी.
 
-A private, local-first Muslim life companion. The application, styles, and application JavaScript are in `index.html`. Small companion files provide installable PWA support, local fonts, libraries, and attributed offline religious content. No login, application backend, AI API, build step, or runtime package installation is required.
+A private, local-first Muslim life companion. The entry HTML, readable ES modules in `js/`, and styles in `css/app.css` have no build step. Small companion files provide installable PWA support, local fonts, libraries, and attributed offline religious content. No login, application backend, AI API, build step, or runtime package installation is required.
 
 ## 🤝 Help improve Istiqamah
 
@@ -31,7 +31,7 @@ python3 -m http.server 8000
 
 Open `http://localhost:8000` on the same computer. Alternatively, serve this directory with any static web server. Use HTTPS for a phone or a deployed site. Do not open a development server to the public Internet.
 
-You can also open `index.html` directly for the basic app. Service workers and phone installation require HTTPS or localhost. Browser storage is scoped to the address you open; export and import a backup when moving between file, localhost, and a deployed address.
+ES modules require a static HTTP server; direct `file://` opening is no longer supported. Service workers, encryption and phone installation require HTTPS or localhost. Browser storage is scoped to the address you open; export and import a backup when moving between file, localhost, and a deployed address.
 
 ## Update an existing localhost copy
 
@@ -51,7 +51,7 @@ Stay online the first time you open it, so the offline cache can finish. After t
 
 To host your own copy, serve the **entire directory**, including `vendor/` and `data/`, from any HTTPS static host.
 
-After installation, reopen it from the home screen. The app, prayer calculations, Hijri calendar, charts, all bundled readings, and both adhan recordings work offline. Verse recitation streams from EveryAyah when first played and is cached when the browser permits. External commentary links need a connection.
+After installation, reopen it from the home screen. The app, prayer calculations, Hijri calendar, charts and all licensed bundled readings work offline. Adhkar and the two adhan recordings are separate, explicit Settings downloads with a licensing notice; after downloading they also work offline. Existing adhkar counters are kept even without the download. Verse recitation streams from EveryAyah when first played and is cached when the browser permits. External commentary links need a connection.
 
 ## Save the tracker as a PDF
 
@@ -68,13 +68,13 @@ Open **Progress**, choose a month, then select **Print / Save as PDF**. Alternat
 - Debt balances, payment histories with overpayment checks, savings goals, gold-based nisab and zakat estimates.
 - Tasbih with a morning/evening adhkar picker, complete Arabic source text and references, automatic source repetition targets, next-dhikr navigation, and daily counts shared with Reflections; free counting retains 33/100 milestones, optional vibration and a linked faith habit; morning/evening adhkar with original repeat counts; fasting calendar, White Days, Ashura, Arafah, six Shawwal days, and next-day fasting prompts. Eid days and the days of Tashriq cannot be marked through the optional fasting calendar; Ramadan does not receive voluntary-fasting suggestions. Local moon-sighting dates can differ from Umm al-Qura. Arafah advice is for non-pilgrims; consult a scholar about your own circumstances.
 - Individual child star charts, Quran minutes, and parent-set rewards; word log and reveal/review cards; a 25-minute focus timer; calendar exports for one or seven days with UTC timestamps and five-minute reminders.
-- JSON backup export, validated import with confirmation before replacement, plan regeneration, re-onboarding, light/dark themes, installable offline shell, and a dedicated print layout.
+- Plain JSON and optional encrypted backup export, validated legacy/encrypted import with confirmation and an undo copy before replacement, seven daily local safety copies, plan regeneration, re-onboarding, light/dark themes, installable offline shell, and a dedicated print layout.
 
 ## Religious content and exact boundaries
 
-Religious text is copied from the requested source datasets, never generated. `data/content.js` bundles 15 curated Quran references in Arabic, English (Abdel Haleem), and Urdu (Fateh Muhammad Jalandhry); 60 thematic Sunan Abi Dawud references with explicit **Sahih or Hasan** source grades and grader names, in three languages; 61 morning/evening adhkar entries from Azkar DB; and 99 names from Names of Allah JSON. Hadith references and grading remain linked to their Sunnah.com pages. Attribution and retrieval details are in `SOURCE-NOTICES.md`.
+Religious text is copied from the requested source datasets, never generated. The `data/*.json` files bundle 15 curated Quran references in Arabic, English (Abdel Haleem), and Urdu (Fateh Muhammad Jalandhry); 60 thematic Sunan Abi Dawud references with explicit **Sahih or Hasan** source grades and grader names, in three languages; 99 names from Names of Allah JSON. Hadith references and grading remain linked to their Sunnah.com pages. Attribution and retrieval details are in `SOURCE-NOTICES.md`.
 
-The names dataset supplies **Arabic meanings only**. Those meanings and the original adhkar remain in Arabic in all interfaces, with a source-language label; this release does not invent English or Urdu religious translations. Quran commentary opens the appropriate Quran.com tafsir page; commentary text is not bundled. There is no in-app tafsir API integration in v1.
+Azkar DB is no longer bundled: Settings offers a credited, checksum-verified download of its 61 original morning/evening entries, with a notice that no explicit license was found. The names dataset supplies **Arabic meanings only**. Those meanings and the original adhkar remain in Arabic in all interfaces, with a source-language label; this release does not invent English or Urdu religious translations. Quran commentary opens the appropriate Quran.com tafsir page; commentary text is not bundled. There is no in-app tafsir API integration in v1.
 
 `hadithService` exposes the bundled open-data provider and a future server-provider interface. The Sunnah.com provider is inactive until a separately implemented server endpoint exists. No API key is present or requested by this frontend. A future server must keep `X-API-Key` private and enforce the same grade checks. There is no account/cloud-sync/push-notification backend in this version.
 
@@ -82,13 +82,24 @@ Browser notifications and adhan reminders work **only while the app is open**; b
 
 ## Privacy and backups
 
-Personal profiles, coordinates, plans, financial entries, children, words, and journals stay in `localStorage`. No analytics, ads, telemetry, geocoding, or remote personal-data requests are included. Fonts, religious data, charts, prayer calculations, and adhan sounds are local assets. Optional Quran refresh and EveryAyah recitation reveal the normal request metadata/IP address to their providers; commentary links open external sites. The promise concerns personal app entries, not network anonymity.
+Personal profiles, coordinates, plans, financial entries, children, words, and journals stay in `localStorage`. No analytics, ads, telemetry, geocoding, or remote personal-data requests are included. Fonts, bundled religious data, charts and prayer calculations are local assets. Adhkar/adhan downloads contact GitHub only after an explicit tap; downloaded files stay in local IndexedDB. Optional Quran refresh and EveryAyah recitation reveal the normal request metadata/IP address to their providers; commentary links open external sites. The promise concerns personal app entries, not network anonymity.
 
-Local browser storage and exported backups are **not encrypted**. Use a trusted device/browser profile. Clearing site data, uninstalling, or private-browsing cleanup can remove records. Export backups regularly and store them privately. Import replaces the current local records only after confirmation. There are no external deletion or account operations.
+Local browser storage, automatic safety copies and plain JSON exports are **not encrypted**. Settings → Export encrypted backup protects that exported file using AES-256-GCM and a PBKDF2-SHA256 key (310,000 iterations) with a unique random salt and nonce. Use at least 12 characters and store the passphrase separately; it cannot be recovered. Settings → Import backup accepts either format and asks for the encrypted file’s passphrase. Use a trusted device/browser profile. Clearing site data, uninstalling, or private-browsing cleanup can remove records. Export backups regularly and store them privately. Import/restore replaces current local records only after confirmation and a successful undo checkpoint. Settings → Restore a previous day lists seven recent active-day copies and recent undo/migration copies. Dates when the app was closed have no new snapshot. There are no external deletion or account operations.
 
 ## Code structure
 
-`index.html` contains independent service objects: `prayerService`, `hijriService`, `hadithService`, `quranService`, `adhkarService`, `storage`, `engine`, and `ui`. This keeps the application portable to a later component/server architecture. `window.Istiqamah` exposes the core services for integration tests. Imported data is shape-checked; user-entered text is escaped before HTML rendering. Dates are stored as local calendar keys in the selected timezone; exported schedule events are converted to UTC, including events close to midnight.
+- `index.html`: semantic shell, local vendor loaders and `js/app.js` module entry.
+- `css/app.css`: calm responsive light/dark styles.
+- `js/prayer.js`, `hijri.js`, `quran.js`, `hadith.js`, `adhkar.js`: existing services.
+- `js/config.js`, `dates.js`, `engine.js`, `records.js`: defaults, calendar keys, plans and scoring.
+- `js/storage.js`, `snapshots.js`, `backup-crypto.js`: compatible persistence, migration, undo/daily copies and encrypted files.
+- `js/content.js`, `optional-content.js`: lazy licensed readings and explicit optional downloads.
+- `js/ui/`: one renderer per screen, common controls, onboarding, charts and backup/download workflows.
+- `js/i18n/{en,ar,ur,ml,hi}.json`: interface catalogs with identical keys; Arabic and Urdu use RTL.
+- `js/app.js`: startup and event wiring; `js/session.js`: transient shared session state.
+- `tests/browser.cjs`, `tests/phase1.cjs`: offline, recovery and regression checks; `tests/optional.cjs`: separate upstream-download integration.
+
+`window.Istiqamah` retains the existing service/test interface. Personal data stays under `istiqamah.v1`, with `version: 1` retained and `schemaVersion: 1` added. The original bytes are backed up under `istiqamah.migration.v1` **before** upgrading. Unknown/corrupt records enter recovery and cannot be overwritten by ordinary saves. See [the audit and complete storage contract](docs/PHASE-1-AUDIT.md).
 
 `sw.js` caches the complete shell and bundled data. Increment its cache version when shipping changed assets; reload after the new worker is installed. Online page reloads request fresh HTML and update the cached offline copy. Settings → Install app → Check for updates also checks the worker and reloads. Offline personal data persists independently of the shell cache.
 
@@ -111,12 +122,33 @@ Tests use `/usr/bin/chromium` when present, or Playwright's installed Chromium. 
 - **Historical habit snapshots:** changing a target today does not rewrite an earlier month's score.
 - **Input validation, payment limits, and import confirmation:** protects existing records from malformed backups and accidental replacement.
 - **Focus timer and recorded Quran minutes for children:** turns study and family intentions into measurable daily actions.
-- **Cached fonts, data, and adhan audio:** the central daily workflow survives a lost connection without relying on third-party scripts.
+- **Cached licensed fonts/data and separate optional downloads:** the central daily workflow survives a lost connection without third-party scripts.
 - **Moon-sighting and reminder explanations:** makes the calendar's source and browser limitations visible where users need them.
 
-## Validation recorded for this release
+## Phase 1 status and validation
 
-A clean `npm ci` and all **23 Chromium browser checks** passed. An actual PDF export was additionally generated and inspected: **two A4 landscape pages** for the default plan. Mobile English, Arabic, Urdu, Malayalam, and Hindi layouts were visually inspected at 390 × 844, with no horizontal overflow. Direct `file://` navigation is blocked by the managed test browser's policy, so the verified opening route is the local static server above. No deployment or environment publication was performed.
+This is **1.1.0-phase1**, the first of the requested sequential phases; the live site is not changed by this local source delivery. Ramadan Mode, deeper faith features, motivation/languages and the cloud foundation remain subsequent phases. [CHANGELOG.md](CHANGELOG.md) records those boundaries.
+
+The baseline had 23 passing checks. The expanded suite has **34 Chromium browser checks**, including legacy migration, backup-write failures, corrupt/future-schema preservation, stale-tab conflicts, encrypted export/import and tampering, seven-copy retention, confirmed restore/undo, recovery failure, identical translation keys, Arabic religious fallback, 390px layouts and offline modules/readings. The separate `npm run test:optional` downloads the three pinned upstream files, verifies their checksums, checks offline access/removal and confirms existing counters survive. It requires network access and `curl`; the ordinary test suite uses no external sacred-text fixtures.
+
+Lighthouse mobile simulation on a local static server with gzip and a 10-minute asset cache measured **95 performance, 100 accessibility, 100 best practices, 100 SEO**. The plain Python development server, which serves uncompressed files, measured 86 performance. These are local lab measurements, not a guarantee for every device or the live deployment. Lighthouse's current release has no PWA scoring category; the browser suite directly checks worker installation, cached files and offline interactions. Recheck the deployed GitHub Pages URL after release.
+
+## Screenshots
+
+Current Chromium captures at 390 × 844 (sample profile):
+
+| Today | Arabic RTL | Dark mode | Encrypted backup |
+| --- | --- | --- | --- |
+| ![Today](docs/screenshots/today-mobile.png) | ![Arabic RTL](docs/screenshots/today-arabic.png) | ![Dark mode](docs/screenshots/today-dark.png) | ![Encrypted backup](docs/screenshots/encrypted-backup.png) |
+
+## Safely release and test on a phone
+
+1. Export a backup from the current live app before releasing. Keep the GitHub Pages origin/path unchanged so existing browser storage remains available.
+2. Review the Phase 1 commit, then merge/push it to `main` when ready. GitHub Settings → Pages should continue to deploy from **main / (root)**; serve the entire repository, including `js/`, `css/`, `data/` and `vendor/`. No build or backend setup is required.
+3. On your phone, open the existing live URL in Chrome (Android) or Safari (iPhone). Settings → Check for updates, then reopen the app. Do not clear site data. Confirm the same name, habits and history are present; the schema upgrade is automatic.
+4. In Settings, export an encrypted backup, then import it using its passphrase. Confirm only after reviewing the replacement notice. Open Restore a previous day and verify a safety copy is listed.
+5. Wait for “Offline app cached”, turn on airplane mode, reopen, log one habit and view Progress. Try Arabic/Urdu and dark mode. Optional adhkar/recordings require a separate online download before they work offline.
+6. No Supabase, Vercel, API keys or account settings are needed for Phase 1. It adds no sync and no real background push notifications.
 
 ## License
 
