@@ -347,11 +347,11 @@ async function tool(page, id) {
     assert.equal(await page.evaluate(() => Istiqamah.state.tasbih.count), 33);
   });
   await check(
-    "optional adhkar starts absent and preserves saved counter selections",
+    "bundled MIT adhkar preserves old counter keys and selections",
     async () => {
       await tool(page, "tasbih");
-      assert.equal(await page.locator("#tasbih-adhkar option").count(), 1);
-      assert.equal(await page.evaluate(() => SOURCE_DATA.adhkar.length), 0);
+      await page.waitForFunction(() => SOURCE_DATA.adhkar.length === 50);
+      assert.equal(await page.locator("#tasbih-adhkar option").count(), 51);
       await page.evaluate(() => {
         Istiqamah.state.tasbih.selected = "morning-1";
         Istiqamah.getDay().adhkar["morning-1"] = 2;
@@ -359,16 +359,17 @@ async function tool(page, id) {
       });
       await page.reload();
       await ready(page);
+      await page.waitForFunction(() => SOURCE_DATA.adhkar.length === 50);
+      await tool(page, "tasbih");
       assert.equal(
-        await page.evaluate(() => Istiqamah.state.tasbih.selected),
+        await page.locator("#tasbih-adhkar").inputValue(),
         "morning-1",
       );
+      assert.equal(await page.locator(".tasbih-button").innerText(), "2");
       assert.equal(
         await page.evaluate(() => Istiqamah.getDay().adhkar["morning-1"]),
         2,
       );
-      await tool(page, "tasbih");
-      assert.equal(await page.locator(".tasbih-button").innerText(), "33");
     },
   );
   await check(
@@ -409,8 +410,10 @@ async function tool(page, id) {
         await page.evaluate(() => Istiqamah.getDay().adhkar["morning-0"]),
         0,
       );
-      await page.evaluate(() => {
-        SOURCE_DATA.adhkar = [];
+      await page.evaluate(async () => {
+        SOURCE_DATA.adhkar = await (
+          await fetch("data/adhkar.json?v=1.2.0")
+        ).json();
         Istiqamah.state.tasbih.selected = "";
         Istiqamah.storage.save();
       });
@@ -575,7 +578,7 @@ async function tool(page, id) {
             ),
         ),
       );
-      assert.equal(d.az, 0);
+      assert.equal(d.az, 50);
       assert.equal(d.n, 99);
     },
   );
@@ -654,6 +657,17 @@ async function tool(page, id) {
   await require("./phase1.cjs")({
     browser,
     base,
+    check,
+    seed: await page.evaluate(() => Istiqamah.state),
+  });
+  await require("./ramadan.cjs")({
+    browser,
+    base,
+    check,
+    seed: await page.evaluate(() => Istiqamah.state),
+  });
+  await require("./upgrade.cjs")({
+    browser,
     check,
     seed: await page.evaluate(() => Istiqamah.state),
   });

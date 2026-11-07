@@ -1,4 +1,4 @@
-import { session } from "./session.js";
+import { session } from "./session.js?v=1.2.0";
 const translations = {},
   loaded = new Map();
 export function loadTranslations(language = session.lang || "en") {
@@ -11,7 +11,7 @@ export function loadTranslations(language = session.lang || "en") {
       (async () => {
         try {
           const response = await fetch(
-            new URL(`./i18n/${language}.json`, import.meta.url),
+            new URL(`./i18n/${language}.json?v=1.2.0`, import.meta.url),
           );
           if (!response.ok) throw new Error("Interface catalog unavailable");
           const catalog = await response.json();

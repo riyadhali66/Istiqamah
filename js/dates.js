@@ -1,5 +1,5 @@
-import { session } from "./session.js";
-import { timezone } from "./config.js";
+import { session } from "./session.js?v=1.2.0";
+import { timezone } from "./config.js?v=1.2.0";
 
 function keyInTZ(date) {
   const parts = new Intl.DateTimeFormat("en-CA", {

@@ -1,6 +1,6 @@
-import { t } from "./i18n.js";
-import { $, toast } from "./utils.js";
-import { session } from "./session.js";
+import { t } from "./i18n.js?v=1.2.0";
+import { $, toast } from "./utils.js?v=1.2.0";
+import { session } from "./session.js?v=1.2.0";
 
 function updateOfflineStatus() {
   const el = $("#offline-status");
@@ -16,9 +16,12 @@ function updateOfflineStatus() {
 async function registerWorker() {
   if ("serviceWorker" in navigator && location.protocol !== "file:") {
     try {
-      const registration = await navigator.serviceWorker.register("./sw.js", {
-        updateViaCache: "none",
-      });
+      const registration = await navigator.serviceWorker.register(
+        "./sw.js?v=1.2.0",
+        {
+          updateViaCache: "none",
+        },
+      );
       registration.update().catch(() => {});
       await navigator.serviceWorker.ready;
       session.offlineReady = true;

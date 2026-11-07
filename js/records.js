@@ -1,8 +1,8 @@
-import { storage } from "./storage.js";
-import { session } from "./session.js";
-import { hijriService } from "./hijri.js";
-import { offsetDay, today } from "./dates.js";
-import { render } from "./ui/core.js";
+import { storage } from "./storage.js?v=1.2.0";
+import { session } from "./session.js?v=1.2.0";
+import { hijriService } from "./hijri.js?v=1.2.0";
+import { offsetDay, today } from "./dates.js?v=1.2.0";
+import { render } from "./ui/core.js?v=1.2.0";
 
 function save() {
   storage.save();
@@ -32,6 +32,7 @@ function getDay(key = session.selectedDate) {
 const dayHabits = (key) =>
   session.state.days[key]?.snapshot || session.state.habits;
 const isPaused = (h, d) =>
+  (h.fasting && d?.ramadan?.notFasting) ||
   (d?.pauseFaith && (h.prayer || h.fasting)) ||
   (h.fasting && d?.key && !hijriService.fasts(d.key).length);
 function score(key) {

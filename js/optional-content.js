@@ -1,12 +1,6 @@
-import { transact } from "./snapshots.js";
+import { transact } from "./snapshots.js?v=1.2.0";
 // Intentionally absent from the install cache. Requests occur only after an explicit download tap.
 export const OPTIONAL_SOURCES = {
-  azkar: {
-    url: "https://raw.githubusercontent.com/osamayy/azkar-db/fbdfa017782c907fd0ca4ee2726060cbc527072f/azkar.json",
-    sha256: "071893211f6c711d7fb389826a7bcc79ac1ad2f0c13bdb4cc3bd38e871480a6c",
-    credit:
-      "osamayy/azkar-db · fbdfa017782c907fd0ca4ee2726060cbc527072f · no explicit license",
-  },
   makkah: {
     url: "https://raw.githubusercontent.com/abodehq/Athan-MP3/cf1a9dd4f1e5e10009439099c5af74479ad332c0/Sounds/Athan%20Makkah.mp3",
     sha256: "4ab22d15fcea1a70f636b50f21e3f82597fa583ec2a21065373b3bde87482647",
@@ -48,35 +42,6 @@ export async function downloadOptional(id) {
   await transact("optional", "readwrite", (store) => store.put({ id, blob }));
   return blob;
 }
-export function parseAdhkar(text) {
-  const source = JSON.parse(text);
-  if (!Array.isArray(source.rows)) throw new Error("Invalid source");
-  const entries = source.rows
-    .filter((row) => ["أذكار الصباح", "أذكار المساء"].includes(row[0]))
-    .map((row) => ({
-      category: row[0],
-      text: row[1],
-      description: row[2],
-      count: row[3],
-      reference: row[4],
-    }));
-  if (
-    entries.length !== 61 ||
-    entries.some(
-      (entry) =>
-        typeof entry.text !== "string" ||
-        !Number.isInteger(entry.count) ||
-        entry.count < 1 ||
-        entry.count > 1000,
-    )
-  )
-    throw new Error("Invalid source");
-  return entries;
-}
-export async function loadOptionalAdhkar() {
-  const blob = await readOptional("azkar");
-  window.SOURCE_DATA.adhkar = blob ? parseAdhkar(await blob.text()) : [];
-}
 export async function optionalAudio(id) {
   if (audioURLs[id]) return audioURLs[id];
   const blob = await readOptional(id);
@@ -88,5 +53,4 @@ export async function removeOptional() {
     URL.revokeObjectURL(url);
     delete audioURLs[id];
   }
-  window.SOURCE_DATA.adhkar = [];
 }

@@ -1,6 +1,14 @@
 # Changelog
 
-## 1.1.0 — in progress
+## 1.2.0 — Phase 2
+
+- Restore morning/evening adhkar as a bundled MIT-licensed core feature with licensed English, preserved old keys, reviewed source aliases and earlier-counter visibility.
+- Add automatic/manual Ramadan, moon adjustment, skippable setup, countdowns, daily checklist, adaptive khatm plan, last-ten-night dua/source grading and i’tikaf.
+- Add Fitr calculation, private year-round qada/make-ups, paused streaks, heatmap/charts, one-page print, Eid summary/greeting PNG and Shawwal links.
+- Add isolated Settings practice mode, schema 2 migration/original-byte backup and versioned offline module upgrade protection.
+- Add date, migration and permanent previous-release service-worker upgrade tests, licensed-source verification and English/Arabic light/dark screenshots.
+
+## 1.1.0-phase1 — Phase 1 foundation
 
 ### Phase 1 — implemented (1.1.0-phase1)
 
@@ -12,7 +20,7 @@
 - Corrected Arabic religious fallback labels/direction, Notification availability checks, Settings geolocation action, impossible-date validation and nested unsafe-key rejection.
 - Expanded browser coverage and added a separate real-source download/offline integration check.
 
-Phases 2–4 are not included in this prerelease. Their completion will form the full 1.1.0 release.
+This foundation preceded the 1.2.0 Ramadan release. Deeper faith, motivation/growth and cloud features remain subsequent phases.
 
 ## 2.0.0 — planned
 

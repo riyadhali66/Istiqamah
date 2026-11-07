@@ -1,11 +1,15 @@
-import { session } from "../session.js";
-import { storage, migrate, validate } from "../storage.js";
-import { snapshots } from "../snapshots.js";
-import { encryptBackup, decryptBackup, isEncrypted } from "../backup-crypto.js";
-import { $, esc, download, toast } from "../utils.js";
-import { modal, render } from "./core.js";
-import { t, loadTranslations } from "../i18n.js";
-import { today } from "../dates.js";
+import { session } from "../session.js?v=1.2.0";
+import { storage, migrate, validate } from "../storage.js?v=1.2.0";
+import { snapshots } from "../snapshots.js?v=1.2.0";
+import {
+  encryptBackup,
+  decryptBackup,
+  isEncrypted,
+} from "../backup-crypto.js?v=1.2.0";
+import { $, esc, download, toast } from "../utils.js?v=1.2.0";
+import { modal, render } from "./core.js?v=1.2.0";
+import { t, loadTranslations } from "../i18n.js?v=1.2.0";
+import { today } from "../dates.js?v=1.2.0";
 let pending,
   encryptedFile,
   choices = [];

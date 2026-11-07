@@ -1,4 +1,14 @@
-import { session } from "./session.js";
+import { ramadanService } from "./ramadan.js?v=1.2.0";
+import {
+  maybeRamadanSetup,
+  skipRamadanSetup,
+  showRamadanSetup,
+  advanceSetup,
+  ramadanTick,
+  printRamadan,
+  shareEid,
+} from "./ui/ramadan.js?v=1.2.0";
+import { session } from "./session.js?v=1.2.0";
 import {
   addWizardDebt,
   finishPlan,
@@ -7,8 +17,8 @@ import {
   showWizard,
   updateProfile,
   validateDraft,
-} from "./ui/onboarding.js";
-import { modal, render } from "./ui/core.js";
+} from "./ui/onboarding.js?v=1.2.0";
+import { modal, render } from "./ui/core.js?v=1.2.0";
 import {
   categoryScore,
   dayHabits,
@@ -19,35 +29,35 @@ import {
   score,
   streak,
   syncTodayHabits,
-} from "./records.js";
-import { $, $$, toast, uid } from "./utils.js";
-import { adhkarService, tasbihSelection } from "./adhkar.js";
-import { offsetDay, today } from "./dates.js";
-import { engine } from "./engine.js";
+} from "./records.js?v=1.2.0";
+import { $, $$, toast, uid } from "./utils.js?v=1.2.0";
+import { adhkarService, tasbihSelection } from "./adhkar.js?v=1.2.0";
+import { offsetDay, today } from "./dates.js?v=1.2.0";
+import { engine } from "./engine.js?v=1.2.0";
 import {
   currentSchedule,
   exportCalendar,
   printTracker,
   showSchedule,
   zonedDate,
-} from "./schedule.js";
-import { storage, validate } from "./storage.js";
-import { t, loadTranslations } from "./i18n.js";
-import { loadInitialContent, loadHadith } from "./content.js";
-import { quranService } from "./quran.js";
+} from "./schedule.js?v=1.2.0";
+import { storage, validate } from "./storage.js?v=1.2.0";
+import { t, loadTranslations } from "./i18n.js?v=1.2.0";
+import { loadInitialContent, loadHadith } from "./content.js?v=1.2.0";
+import { quranService } from "./quran.js?v=1.2.0";
 import {
   notifications,
   playAdhan,
   playAudio,
   pomodoro,
   tickTimer,
-} from "./reminders.js";
-import { defaults, fresh, timezone } from "./config.js";
-import { registerWorker } from "./offline.js";
-import { prayerService } from "./prayer.js";
-import { hijriService } from "./hijri.js";
-import { hadithService } from "./hadith.js";
-import { ui } from "./ui/views.js";
+} from "./reminders.js?v=1.2.0";
+import { defaults, fresh, timezone } from "./config.js?v=1.2.0";
+import { registerWorker } from "./offline.js?v=1.2.0";
+import { prayerService } from "./prayer.js?v=1.2.0";
+import { hijriService } from "./hijri.js?v=1.2.0";
+import { hadithService } from "./hadith.js?v=1.2.0";
+import { ui } from "./ui/views.js?v=1.2.0";
 
 ("use strict");
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -59,6 +69,43 @@ document.addEventListener("click", async (e) => {
   if (!el || el.disabled) return;
   const { action, id, value, index, key } = el.dataset;
   switch (action) {
+    case "ramadan-setup-skip":
+      skipRamadanSetup();
+      break;
+    case "ramadan-setup":
+      showRamadanSetup();
+      break;
+    case "ramadan-setup-next":
+      advanceSetup();
+      break;
+    case "ramadan-details":
+      session.page = "tools";
+      session.tool = "ramadan";
+      render();
+      break;
+    case "ramadan-preview-off":
+      ramadanService.preview("off");
+      render();
+      break;
+    case "ramadan-shawwal":
+      session.page = "tools";
+      session.tool = "fasting";
+      render();
+      break;
+    case "ramadan-print":
+      printRamadan();
+      break;
+    case "eid-share":
+      await shareEid();
+      break;
+    case "qada-done":
+      ramadanService.makeUp();
+      render();
+      break;
+    case "qada-undo":
+      ramadanService.makeUp(-1);
+      render();
+      break;
     case "wizard-debt":
       if (addWizardDebt()) renderWizard();
       break;
@@ -151,7 +198,7 @@ document.addEventListener("click", async (e) => {
       render();
       break;
     case "dhikr-reset":
-      getDay().adhkar[session.adhkarTab + "-" + index] = 0;
+      getDay().adhkar[adhkarService.key(session.adhkarTab, Number(index))] = 0;
       getDay().values[
         session.adhkarTab === "morning" ? "adhkar-am" : "adhkar-pm"
       ] = 0;
@@ -189,10 +236,10 @@ document.addEventListener("click", async (e) => {
     case "tasbih-next": {
       const selected = tasbihSelection();
       if (selected)
-        session.state.tasbih.selected =
-          selected.period +
-          "-" +
-          ((selected.index + 1) % adhkarService.list(selected.period).length);
+        session.state.tasbih.selected = adhkarService.key(
+          selected.period,
+          (selected.index + 1) % adhkarService.list(selected.period).length,
+        );
       save();
       render();
       break;
@@ -321,22 +368,22 @@ document.addEventListener("click", async (e) => {
       printTracker();
       break;
     case "encrypted-backup":
-      (await import("./ui/backups.js")).showEncryptedExport();
+      (await import("./ui/backups.js?v=1.2.0")).showEncryptedExport();
       break;
     case "restore-days":
-      await (await import("./ui/backups.js")).showRestoreDays();
+      await (await import("./ui/backups.js?v=1.2.0")).showRestoreDays();
       break;
     case "choose-snapshot":
-      (await import("./ui/backups.js")).chooseSnapshot(Number(id));
+      (await import("./ui/backups.js?v=1.2.0")).chooseSnapshot(Number(id));
       break;
     case "export-original":
       storage.exportOriginal();
       break;
     case "download-optional":
-      await (await import("./ui/downloads.js")).installOptional(id, el);
+      await (await import("./ui/downloads.js?v=1.2.0")).installOptional(id, el);
       break;
     case "remove-optional":
-      await (await import("./ui/downloads.js")).deleteOptional();
+      await (await import("./ui/downloads.js?v=1.2.0")).deleteOptional();
       break;
     case "backup":
       storage.export();
@@ -404,6 +451,50 @@ document.addEventListener("click", async (e) => {
 });
 document.addEventListener("change", async (e) => {
   const el = e.target;
+  if (el.id === "ramadan-mode") {
+    ramadanService.mode(el.value);
+    render();
+    return;
+  }
+  if (el.id === "ramadan-adjustment") {
+    ramadanService.config().adjustment = Number(el.value);
+    if (!ramadanService.context().preview) save();
+    render();
+    return;
+  }
+  if (el.id === "ramadan-preview") {
+    ramadanService.preview(el.value);
+    session.page = "today";
+    render();
+    return;
+  }
+  if (el.dataset.ramadan) {
+    const key = el.dataset.ramadan;
+    if (key === "setupNotFasting") return;
+    if (["fitrAmount", "fitrPeople"].includes(key)) {
+      const value = Number(el.value);
+      if (
+        !Number.isFinite(value) ||
+        value < 0 ||
+        value > 1e6 ||
+        (key === "fitrPeople" &&
+          (!Number.isInteger(value) || value < 1 || value > 100))
+      )
+        return;
+      ramadanService.config()[key] = value;
+      if (!ramadanService.context().preview) save();
+    } else {
+      const value = el.type === "checkbox" ? el.checked : Number(el.value);
+      if (
+        typeof value === "number" &&
+        (!Number.isFinite(value) || value < 0 || value > 1e6)
+      )
+        return;
+      ramadanService.update(key, value);
+    }
+    render();
+    return;
+  }
   if (el.dataset.draftDebt) {
     session.draftDebt[el.dataset.draftDebt] = el.value;
     return;
@@ -555,7 +646,9 @@ document.addEventListener("change", async (e) => {
       save();
       break;
     case "import-file":
-      await (await import("./ui/backups.js")).handleBackupFile(el.files[0]);
+      await (
+        await import("./ui/backups.js?v=1.2.0")
+      ).handleBackupFile(el.files[0]);
       el.value = "";
       break;
   }
@@ -704,6 +797,7 @@ render();
 if (!session.state.onboarded && !session.storageError) showWizard();
 if (session.storageError)
   toast("Saved data could not be read. Import a backup before making changes.");
+maybeRamadanSetup();
 registerWorker();
 loadInitialContent()
   .then(() => {
@@ -720,6 +814,7 @@ loadInitialContent()
   .catch(() => toast("Readings could not be loaded. Your records are safe."));
 setInterval(() => {
   prayerService.tick();
+  ramadanTick();
   tickTimer();
   let now = today();
   if (now !== session.lastToday) {
@@ -727,6 +822,7 @@ setInterval(() => {
     if (session.month === session.lastToday.slice(0, 7))
       session.month = now.slice(0, 7);
     session.lastToday = now;
+    maybeRamadanSetup();
     render();
   }
 }, 1e3);
@@ -735,6 +831,7 @@ window.Istiqamah = {
     return session.state;
   },
   engine,
+  ramadanService,
   prayerService,
   hijriService,
   quranService,

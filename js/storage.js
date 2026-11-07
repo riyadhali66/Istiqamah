@@ -1,10 +1,17 @@
-import { session } from "./session.js";
-import { fresh, defaults, CATEGORIES, STRUGGLES, METHODS } from "./config.js";
-import { toast, download } from "./utils.js";
-import { today } from "./dates.js";
-import { snapshots } from "./snapshots.js";
+import { ramadanDefaults, validRamadan } from "./ramadan-model.js?v=1.2.0";
+import { session } from "./session.js?v=1.2.0";
+import {
+  fresh,
+  defaults,
+  CATEGORIES,
+  STRUGGLES,
+  METHODS,
+} from "./config.js?v=1.2.0";
+import { toast, download } from "./utils.js?v=1.2.0";
+import { today } from "./dates.js?v=1.2.0";
+import { snapshots } from "./snapshots.js?v=1.2.0";
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export function hasUnsafeKeys(value) {
   if (!value || typeof value !== "object") return false;
   return Object.keys(value).some(
@@ -20,15 +27,17 @@ export function migrate(value) {
     ...structuredClone(value),
     schemaVersion: SCHEMA_VERSION,
   };
+  upgraded.ramadan = { ...ramadanDefaults(), ...upgraded.ramadan };
   upgraded.profile = { ...defaults(), ...upgraded.profile };
   upgraded.settings = { ...fresh().settings, ...upgraded.settings };
+  if (!validate(upgraded)) throw new Error("Invalid upgraded format");
   return upgraded;
 }
 let lastSaved = null,
   snapshotQueue = Promise.resolve();
 export const storage = {
   key: "istiqamah.v1",
-  migrationKey: "istiqamah.migration.v1",
+  migrationKey: "istiqamah.migration.v2",
   async load() {
     try {
       const raw = localStorage.getItem(this.key);
@@ -36,12 +45,14 @@ export const storage = {
       if (!raw) return fresh();
       const old = JSON.parse(raw),
         upgraded = migrate(old);
-      if (old.schemaVersion == null) {
+      if ((old.schemaVersion || 0) < SCHEMA_VERSION) {
         // The exact bytes must be recoverable before committing a migration.
         if (localStorage.getItem(this.migrationKey) == null)
           localStorage.setItem(this.migrationKey, raw);
         if (localStorage.getItem(this.migrationKey) !== raw)
           await snapshots.checkpoint(raw, "migration");
+        if (localStorage.getItem(this.key) !== raw)
+          throw new Error("Concurrent migration");
         const serialized = JSON.stringify(upgraded);
         localStorage.setItem(this.key, serialized);
         lastSaved = serialized;
@@ -152,7 +163,7 @@ function validate(s) {
   if (
     !obj(s) ||
     s.version !== 1 ||
-    (s.schemaVersion != null && s.schemaVersion !== 1) ||
+    (s.schemaVersion != null && ![1, 2].includes(s.schemaVersion)) ||
     typeof s.onboarded !== "boolean" ||
     !obj(s.profile) ||
     !list(s.habits, 100, habit) ||
@@ -258,13 +269,23 @@ function validate(s) {
     !num(s.tasbih.count, 0, 1e12) ||
     (s.tasbih.selected != null &&
       !(
-        text(s.tasbih.selected, 20) &&
-        /^(?:(?:morning|evening)-\d{1,2})?$/.test(s.tasbih.selected)
+        text(s.tasbih.selected, 30) &&
+        /^(?:(?:morning|evening)-\d{1,2}|seen-(?:morning|evening)-\d{1,2})?$/.test(
+          s.tasbih.selected,
+        )
       )) ||
     ![33, 100].includes(s.tasbih.goal) ||
     !record(s.reviews, 1e3, (r) => record(r, 10, (v) => text(v, 1e5))) ||
     !record(s.savings, 1e3, (v) => num(v)) ||
     !record(s.zakat, 8, (v) => num(v))
+  )
+    return false;
+  if (
+    s.schemaVersion === 2 &&
+    (!validRamadan(s.ramadan) ||
+      Object.values(s.days).some(
+        (d) => d.ramadan != null && !validRamadan(d.ramadan, true),
+      ))
   )
     return false;
   return true;

@@ -1,9 +1,9 @@
-import { session } from "./session.js";
-import { $, toast } from "./utils.js";
-import { getDay, save } from "./records.js";
-import { today } from "./dates.js";
+import { session } from "./session.js?v=1.2.0";
+import { $, toast } from "./utils.js?v=1.2.0";
+import { getDay, save } from "./records.js?v=1.2.0";
+import { today } from "./dates.js?v=1.2.0";
 
-import { optionalAudio } from "./optional-content.js";
+import { optionalAudio } from "./optional-content.js?v=1.2.0";
 function playAudio(url) {
   if (session.audioPlayer) {
     session.audioPlayer.pause();

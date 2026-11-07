@@ -51,7 +51,7 @@ Stay online the first time you open it, so the offline cache can finish. After t
 
 To host your own copy, serve the **entire directory**, including `vendor/` and `data/`, from any HTTPS static host.
 
-After installation, reopen it from the home screen. The app, prayer calculations, Hijri calendar, charts and all licensed bundled readings work offline. Adhkar and the two adhan recordings are separate, explicit Settings downloads with a licensing notice; after downloading they also work offline. Existing adhkar counters are kept even without the download. Verse recitation streams from EveryAyah when first played and is cached when the browser permits. External commentary links need a connection.
+After installation, reopen it from the home screen. The app, prayer calculations, Hijri calendar, charts and all licensed bundled readings work offline. Morning/evening adhkar is now a bundled MIT-licensed core feature. Only the two adhan recordings remain explicit Settings downloads with a licensing notice; downloaded audio also works offline. Existing adhkar counters are kept even without the download. Verse recitation streams from EveryAyah when first played and is cached when the browser permits. External commentary links need a connection.
 
 ## Save the tracker as a PDF
 
@@ -74,7 +74,7 @@ Open **Progress**, choose a month, then select **Print / Save as PDF**. Alternat
 
 Religious text is copied from the requested source datasets, never generated. The `data/*.json` files bundle 15 curated Quran references in Arabic, English (Abdel Haleem), and Urdu (Fateh Muhammad Jalandhry); 60 thematic Sunan Abi Dawud references with explicit **Sahih or Hasan** source grades and grader names, in three languages; 99 names from Names of Allah JSON. Hadith references and grading remain linked to their Sunnah.com pages. Attribution and retrieval details are in `SOURCE-NOTICES.md`.
 
-Azkar DB is no longer bundled: Settings offers a credited, checksum-verified download of its 61 original morning/evening entries, with a notice that no explicit license was found. The names dataset supplies **Arabic meanings only**. Those meanings and the original adhkar remain in Arabic in all interfaces, with a source-language label; this release does not invent English or Urdu religious translations. Quran commentary opens the appropriate Quran.com tafsir page; commentary text is not bundled. There is no in-app tafsir API integration in v1.
+Morning/evening adhkar now comes from Seen Arabic's **MIT-licensed** dataset (© 2024 Seen Arabic, commit `29d7623fede52eca835a789025dfda866e8cfe44`), with verbatim Arabic, source counts/references and its licensed English translation. Urdu, Malayalam and Hindi show Arabic with a source-language label. The bundle has 26 morning and 24 evening entries. Old `morning-N`/`evening-N` counters are unchanged: reviewed equivalents reuse their keys, new/different entries get stable source IDs, and earlier counters remain visible in Reflections. An unmatched saved selection shows its retained count without reassigning it to another text. Unlicensed Azkar downloads are retired. The names dataset supplies **Arabic meanings only**. Those meanings and the original adhkar remain in Arabic in all interfaces, with a source-language label; this release does not invent English or Urdu religious translations. Quran commentary opens the appropriate Quran.com tafsir page; commentary text is not bundled. There is no in-app tafsir API integration in v1.
 
 `hadithService` exposes the bundled open-data provider and a future server-provider interface. The Sunnah.com provider is inactive until a separately implemented server endpoint exists. No API key is present or requested by this frontend. A future server must keep `X-API-Key` private and enforce the same grade checks. There is no account/cloud-sync/push-notification backend in this version.
 
@@ -82,7 +82,7 @@ Browser notifications and adhan reminders work **only while the app is open**; b
 
 ## Privacy and backups
 
-Personal profiles, coordinates, plans, financial entries, children, words, and journals stay in `localStorage`. No analytics, ads, telemetry, geocoding, or remote personal-data requests are included. Fonts, bundled religious data, charts and prayer calculations are local assets. Adhkar/adhan downloads contact GitHub only after an explicit tap; downloaded files stay in local IndexedDB. Optional Quran refresh and EveryAyah recitation reveal the normal request metadata/IP address to their providers; commentary links open external sites. The promise concerns personal app entries, not network anonymity.
+Personal profiles, coordinates, plans, financial entries, children, words, and journals stay in `localStorage`. No analytics, ads, telemetry, geocoding, or remote personal-data requests are included. Fonts, bundled religious data, charts and prayer calculations are local assets. Only optional adhan downloads contact GitHub after an explicit tap; downloaded files stay in local IndexedDB. Bundled adhkar needs no external request. Optional Quran refresh and EveryAyah recitation reveal the normal request metadata/IP address to their providers; commentary links open external sites. The promise concerns personal app entries, not network anonymity.
 
 Local browser storage, automatic safety copies and plain JSON exports are **not encrypted**. Settings → Export encrypted backup protects that exported file using AES-256-GCM and a PBKDF2-SHA256 key (310,000 iterations) with a unique random salt and nonce. Use at least 12 characters and store the passphrase separately; it cannot be recovered. Settings → Import backup accepts either format and asks for the encrypted file’s passphrase. Use a trusted device/browser profile. Clearing site data, uninstalling, or private-browsing cleanup can remove records. Export backups regularly and store them privately. Import/restore replaces current local records only after confirmation and a successful undo checkpoint. Settings → Restore a previous day lists seven recent active-day copies and recent undo/migration copies. Dates when the app was closed have no new snapshot. There are no external deletion or account operations.
 
@@ -99,7 +99,7 @@ Local browser storage, automatic safety copies and plain JSON exports are **not 
 - `js/app.js`: startup and event wiring; `js/session.js`: transient shared session state.
 - `tests/browser.cjs`, `tests/phase1.cjs`: offline, recovery and regression checks; `tests/optional.cjs`: separate upstream-download integration.
 
-`window.Istiqamah` retains the existing service/test interface. Personal data stays under `istiqamah.v1`, with `version: 1` retained and `schemaVersion: 1` added. The original bytes are backed up under `istiqamah.migration.v1` **before** upgrading. Unknown/corrupt records enter recovery and cannot be overwritten by ordinary saves. See [the audit and complete storage contract](docs/PHASE-1-AUDIT.md).
+`window.Istiqamah` retains the existing service/test interface. Personal data stays under `istiqamah.v1`, with `version: 1` retained and `schemaVersion: 2` added. The original bytes are backed up under `istiqamah.migration.v2` **before** upgrading to schema 2 (the earlier v1 copy is retained). Unknown/corrupt records enter recovery and cannot be overwritten by ordinary saves. See [the audit and complete storage contract](docs/PHASE-1-AUDIT.md).
 
 `sw.js` caches the complete shell and bundled data. Increment its cache version when shipping changed assets; reload after the new worker is installed. Online page reloads request fresh HTML and update the cached offline copy. Settings → Install app → Check for updates also checks the worker and reloads. Offline personal data persists independently of the shell cache.
 
@@ -125,30 +125,48 @@ Tests use `/usr/bin/chromium` when present, or Playwright's installed Chromium. 
 - **Cached licensed fonts/data and separate optional downloads:** the central daily workflow survives a lost connection without third-party scripts.
 - **Moon-sighting and reminder explanations:** makes the calendar's source and browser limitations visible where users need them.
 
-## Phase 1 status and validation
+## v1.2.0 — Ramadan Mode and licensed core adhkar
 
-This is **1.1.0-phase1**, the first of the requested sequential phases; the live site is not changed by this local source delivery. Ramadan Mode, deeper faith features, motivation/languages and the cloud foundation remain subsequent phases. [CHANGELOG.md](CHANGELOG.md) records those boundaries.
+- Automatic Ramadan activation from Umm al-Qura, a three-day preparation banner, manual start/end and ±1-day moon-sighting adjustment in Settings.
+- Skippable two-step setup: half/one/two/three khatm, taraweeh preference, daily sadaqah goal, and a private “not fasting today” flag. No exemption reason is requested or stored.
+- Gold Today card with Fajr/Maghrib countdowns, daily checklist, catch-up reading planner and last-ten-night reminders with the complete verbatim Tirmidhi 3513 narration and source grading.
+- Tools → Ramadan: 30-slot heatmap, Quran/fasting/taraweeh chart, one-page A4 tracker, private missed-fast balance and make-up logging after Ramadan. Fasting pauses preserve the Ramadan streak. Correcting a flag recalculates the balance.
+- Last-ten-day Zakat al-Fitr calculation from your own amount/family size, with the local-authority note and before-Eid-prayer reminder.
+- Eid summary with a greeting PNG that contains only the app name, greeting and app link. No name, qada, exemption or financial data is drawn. Shawwal suggestions link to the existing fasting calendar.
+- Schema 1→2 migration preserves old fields and daily records and saves original bytes before replacing the record. Existing backups remain importable. See [the Phase 2 storage/source notes](docs/PHASE-2-NOTES.md).
 
-The baseline had 23 passing checks. The expanded suite has **34 Chromium browser checks**, including legacy migration, backup-write failures, corrupt/future-schema preservation, stale-tab conflicts, encrypted export/import and tampering, seven-copy retention, confirmed restore/undo, recovery failure, identical translation keys, Arabic religious fallback, 390px layouts and offline modules/readings. The separate `npm run test:optional` downloads the three pinned upstream files, verifies their checksums, checks offline access/removal and confirms existing counters survive. It requires network access and `curl`; the ordinary test suite uses no external sacred-text fixtures.
+The bundled calendar currently puts 1 Ramadan 1448 on **8 February 2027** and Eid on **9 March 2027** (a 29-day month). Automatic mode respects the actual calendar. “Day X of 30” and the printable sheet retain 30 slots; unused slots stay empty. Manual mode supports a 30-day month; local moon sighting can differ.
 
-Lighthouse mobile simulation on a local static server with gzip and a 10-minute asset cache measured **95 performance, 100 accessibility, 100 best practices, 100 SEO**. The plain Python development server, which serves uncompressed files, measured 86 performance. These are local lab measurements, not a guarantee for every device or the live deployment. Lighthouse's current release has no PWA scoring category; the browser suite directly checks worker installation, cached files and offline interactions. Recheck the deployed GitHub Pages URL after release.
+## Preview Ramadan on your phone today
+
+Open **Settings → About & Credits → Developer preview → Preview Ramadan** and choose day 1, 21, 30, Eid or Shawwal. The option is inside a collapsed details control. This is a temporary 30-day practice month, independent of the actual year's length. Preview checklist/settings edits stay in session memory and do not change real days or qada. Tap **Exit preview** to discard practice records, or reload to leave preview. For real dates, use the separate Settings Ramadan controls.
+
+## Validation
+
+`npm test` runs **45 Chromium checks**, including dates/clock simulations, actual 29-day and manual 30-day months, moon adjustment, night boundaries, planner math, qada/pauses, schema migration/refusal, five-language RTL/mobile layouts, PNG/print output and a permanent **real git-release upgrade test**. The latter installs Phase 1 with its actual worker and app-created saved records, serves v1.2.0 at the same address, reloads and checks unchanged old fields plus offline operation. Versioned module dependencies prevent a fresh HTML page from executing cached old modules during that upgrade.
+
+`npm run test:optional` separately checks the two real pinned adhan downloads, checksum rejection and offline removal. `npm run test:sources` checks licensed-source text, repeat counts, references, English translation, license and Tirmidhi text/grades against pinned upstream files. Both require `curl` and network access; the regular browser suite needs no external content downloads.
+
+Local gzip-served Lighthouse mobile simulation measured **95 performance, 100 accessibility, 100 best practices, 100 SEO**. Recheck the deployed URL after merging. Current Lighthouse has no PWA score; worker/offline behavior is tested directly. A Chromium PDF export was verified as **one A4 landscape page**.
 
 ## Screenshots
 
-Current Chromium captures at 390 × 844 (sample profile):
+Current 390px synthetic Demo/Dubai captures (no existing user's data), in English/Arabic and light/dark themes:
 
-| Today | Arabic RTL | Dark mode | Encrypted backup |
-| --- | --- | --- | --- |
-| ![Today](docs/screenshots/today-mobile.png) | ![Arabic RTL](docs/screenshots/today-arabic.png) | ![Dark mode](docs/screenshots/today-dark.png) | ![Encrypted backup](docs/screenshots/encrypted-backup.png) |
+| Screen | English light | English dark | Arabic light | Arabic dark |
+| --- | --- | --- | --- | --- |
+| Ramadan home | ![](docs/screenshots/ramadan/home-en-light.png) | ![](docs/screenshots/ramadan/home-en-dark.png) | ![](docs/screenshots/ramadan/home-ar-light.png) | ![](docs/screenshots/ramadan/home-ar-dark.png) |
+| Khatm planner | ![](docs/screenshots/ramadan/planner-en-light.png) | ![](docs/screenshots/ramadan/planner-en-dark.png) | ![](docs/screenshots/ramadan/planner-ar-light.png) | ![](docs/screenshots/ramadan/planner-ar-dark.png) |
+| Eid card | ![](docs/screenshots/ramadan/eid-en-light.png) | ![](docs/screenshots/ramadan/eid-en-dark.png) | ![](docs/screenshots/ramadan/eid-ar-light.png) | ![](docs/screenshots/ramadan/eid-ar-dark.png) |
 
 ## Safely release and test on a phone
 
 1. Export a backup from the current live app before releasing. Keep the GitHub Pages origin/path unchanged so existing browser storage remains available.
-2. Review the Phase 1 commit, then merge/push it to `main` when ready. GitHub Settings → Pages should continue to deploy from **main / (root)**; serve the entire repository, including `js/`, `css/`, `data/` and `vendor/`. No build or backend setup is required.
+2. Review the Phase 2 commit, then merge/push it to `main` when ready. GitHub Settings → Pages should continue to deploy from **main / (root)**; serve the entire repository, including `js/`, `css/`, `data/` and `vendor/`. No build or backend setup is required.
 3. On your phone, open the existing live URL in Chrome (Android) or Safari (iPhone). Settings → Check for updates, then reopen the app. Do not clear site data. Confirm the same name, habits and history are present; the schema upgrade is automatic.
 4. In Settings, export an encrypted backup, then import it using its passphrase. Confirm only after reviewing the replacement notice. Open Restore a previous day and verify a safety copy is listed.
-5. Wait for “Offline app cached”, turn on airplane mode, reopen, log one habit and view Progress. Try Arabic/Urdu and dark mode. Optional adhkar/recordings require a separate online download before they work offline.
-6. No Supabase, Vercel, API keys or account settings are needed for Phase 1. It adds no sync and no real background push notifications.
+5. Wait for “Offline app cached”, turn on airplane mode, reopen, log one habit and view Progress. Try Arabic/Urdu and dark mode. Only optional adhan recordings need an online download first; core adhkar is bundled.
+6. No Supabase, Vercel, API keys or account settings are needed for v1.2.0. This release adds no sync and no real background push notifications.
 
 ## License
 

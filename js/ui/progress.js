@@ -7,12 +7,12 @@ import {
   monthlyHabits,
   score,
   streak,
-} from "../records.js";
-import { session } from "../session.js";
-import { t } from "../i18n.js";
-import { today } from "../dates.js";
-import { esc, money } from "../utils.js";
-import { CATEGORIES } from "../config.js";
+} from "../records.js?v=1.2.0";
+import { session } from "../session.js?v=1.2.0";
+import { t } from "../i18n.js?v=1.2.0";
+import { today } from "../dates.js?v=1.2.0";
+import { esc, money } from "../utils.js?v=1.2.0";
+import { CATEGORIES } from "../config.js?v=1.2.0";
 
 function view_progress() {
   const keys = monthKeys(),

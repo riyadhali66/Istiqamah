@@ -1,12 +1,12 @@
-import { categoryScore, monthKeys, score } from "../records.js";
-import { today } from "../dates.js";
-import { session } from "../session.js";
-import { $ } from "../utils.js";
-import { t } from "../i18n.js";
-import { CATEGORIES } from "../config.js";
+import { categoryScore, monthKeys, score } from "../records.js?v=1.2.0";
+import { today } from "../dates.js?v=1.2.0";
+import { session } from "../session.js?v=1.2.0";
+import { $ } from "../utils.js?v=1.2.0";
+import { t } from "../i18n.js?v=1.2.0";
+import { CATEGORIES } from "../config.js?v=1.2.0";
 
 export async function ensureCharts() {
-  await import("../../vendor/chart.js");
+  await import("../../vendor/chart.js?v=1.2.0");
 }
 function drawCharts() {
   if (!window.Chart) return;

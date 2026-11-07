@@ -36,21 +36,22 @@ let browser;
   await page.locator('[data-action="finish-wizard"]').click();
   await page.locator('[data-action="nav"][data-id="settings"]').first().click();
   const sources = await page.evaluate(
-    async () => (await import("./js/optional-content.js")).OPTIONAL_SOURCES,
+    async () =>
+      (await import("./js/optional-content.js?v=1.2.0")).OPTIONAL_SOURCES,
   );
-  await page.route(sources.azkar.url, (route) =>
+  assert.equal(await page.evaluate(() => SOURCE_DATA.adhkar.length), 50);
+  await page.route(sources.makkah.url, (route) =>
     route.fulfill({ status: 200, body: "changed source" }),
   );
   await page
-    .locator('[data-action="download-optional"][data-id="azkar"]')
+    .locator('[data-action="download-optional"][data-id="makkah"]')
     .click();
   await page.waitForFunction(() =>
     document
       .querySelector("#toast")
       .textContent.includes("Download unavailable"),
   );
-  assert.equal(await page.evaluate(() => SOURCE_DATA.adhkar.length), 0);
-  await page.unroute(sources.azkar.url);
+  await page.unroute(sources.makkah.url);
   await page.evaluate(() => {
     Istiqamah.getDay().adhkar["morning-1"] = 2;
     Istiqamah.storage.save();
@@ -79,8 +80,11 @@ let browser;
     assert.equal(
       await page.evaluate(
         async (id) =>
-          (await (await import("./js/optional-content.js")).readOptional(id))
-            .size,
+          (
+            await (
+              await import("./js/optional-content.js?v=1.2.0")
+            ).readOptional(id)
+          ).size,
         id,
       ),
       bytes.length,
@@ -91,7 +95,7 @@ let browser;
       () => (document.querySelector("#toast").textContent = ""),
     );
   }
-  assert.equal(await page.evaluate(() => SOURCE_DATA.adhkar.length), 61);
+  assert.equal(await page.evaluate(() => SOURCE_DATA.adhkar.length), 50);
   assert.equal(
     await page.evaluate(() => Istiqamah.getDay().adhkar["morning-1"]),
     2,
@@ -104,35 +108,41 @@ let browser;
     () =>
       !!navigator.serviceWorker.controller &&
       !!window.Istiqamah &&
-      SOURCE_DATA.adhkar.length === 61,
+      SOURCE_DATA.adhkar.length === 50,
   );
   await context.setOffline(true);
   await page.reload();
   await page.waitForFunction(
-    () => !!window.Istiqamah && SOURCE_DATA.adhkar.length === 61,
+    () => !!window.Istiqamah && SOURCE_DATA.adhkar.length === 50,
   );
   assert.equal(
     await page.evaluate(() => Istiqamah.getDay().adhkar["morning-1"]),
     2,
   );
   const audio = await page.evaluate(async () => {
-    const m = await import("./js/optional-content.js");
+    const m = await import("./js/optional-content.js?v=1.2.0");
     const url = await m.optionalAudio("makkah");
     return (await (await fetch(url)).arrayBuffer()).byteLength;
   });
   assert(audio > 400000);
   await page.locator('[data-action="nav"][data-id="settings"]').first().click();
   await page.locator('[data-action="remove-optional"]').click();
-  await page.waitForFunction(() => SOURCE_DATA.adhkar.length === 0);
+  await page.waitForFunction(() => SOURCE_DATA.adhkar.length === 50);
   assert.equal(
     await page.evaluate(() => Istiqamah.getDay().adhkar["morning-1"]),
     2,
+  );
+  await page.waitForFunction(
+    async () =>
+      !(await (
+        await import("./js/optional-content.js?v=1.2.0")
+      ).readOptional("makkah")),
   );
   assert.equal(
     await page.evaluate(
       async () =>
         !!(await (
-          await import("./js/optional-content.js")
+          await import("./js/optional-content.js?v=1.2.0")
         ).readOptional("makkah")),
     ),
     false,

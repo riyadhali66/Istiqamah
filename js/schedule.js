@@ -1,11 +1,16 @@
-import { prayerService } from "./prayer.js";
-import { session } from "./session.js";
-import { CATEGORIES, timezone } from "./config.js";
-import { modal } from "./ui/core.js";
-import { t } from "./i18n.js";
-import { $, download, esc, icon, money } from "./utils.js";
-import { offsetDay } from "./dates.js";
-import { isPaused, monthKeys, monthlyHabits, score } from "./records.js";
+import { prayerService } from "./prayer.js?v=1.2.0";
+import { session } from "./session.js?v=1.2.0";
+import { CATEGORIES, timezone } from "./config.js?v=1.2.0";
+import { modal } from "./ui/core.js?v=1.2.0";
+import { t } from "./i18n.js?v=1.2.0";
+import { $, download, esc, icon, money } from "./utils.js?v=1.2.0";
+import { offsetDay } from "./dates.js?v=1.2.0";
+import {
+  isPaused,
+  monthKeys,
+  monthlyHabits,
+  score,
+} from "./records.js?v=1.2.0";
 
 function currentSchedule(key) {
   const prayers = prayerService.calculate(key),

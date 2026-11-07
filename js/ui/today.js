@@ -1,3 +1,4 @@
+import { ramadanHome } from "./ramadan.js?v=1.2.0";
 import {
   dayHabits,
   getDay,
@@ -5,20 +6,20 @@ import {
   isPaused,
   score,
   streak,
-} from "../records.js";
-import { session } from "../session.js";
-import { prayerService } from "../prayer.js";
-import { quranService } from "../quran.js";
-import { hadithService } from "../hadith.js";
-import { contentService } from "../content.js";
-import { engine } from "../engine.js";
-import { t } from "../i18n.js";
-import { esc, icon } from "../utils.js";
-import { today } from "../dates.js";
-import { hijriService } from "../hijri.js";
-import { CATEGORIES } from "../config.js";
-import { currentSchedule } from "../schedule.js";
-import { pomodoro, timerText } from "../reminders.js";
+} from "../records.js?v=1.2.0";
+import { session } from "../session.js?v=1.2.0";
+import { prayerService } from "../prayer.js?v=1.2.0";
+import { quranService } from "../quran.js?v=1.2.0";
+import { hadithService } from "../hadith.js?v=1.2.0";
+import { contentService } from "../content.js?v=1.2.0";
+import { engine } from "../engine.js?v=1.2.0";
+import { t } from "../i18n.js?v=1.2.0";
+import { esc, icon } from "../utils.js?v=1.2.0";
+import { today } from "../dates.js?v=1.2.0";
+import { hijriService } from "../hijri.js?v=1.2.0";
+import { CATEGORIES } from "../config.js?v=1.2.0";
+import { currentSchedule } from "../schedule.js?v=1.2.0";
+import { pomodoro, timerText } from "../reminders.js?v=1.2.0";
 
 function view_today() {
   const d = getDay(),
@@ -48,6 +49,7 @@ function view_today() {
       "Your plan for today.",
       `<div class="date-chip"><input aria-label="${t("Today")}" type="date" id="day-picker" value="${session.selectedDate}" max="${today()}" style="font-size:11px;padding:5px;min-height:30px"><div class="muted" style="margin-top:4px">${hijriService.format(session.selectedDate)}</div></div>`,
     ) +
+    ramadanHome() +
     `<section class="hero"><div class="hero-content"><div class="eyebrow">${t("A little progress, every day.")}</div><h2>${t("Begin with intention. Grow with consistency.")}</h2><p>${t("Your next small step is enough.")}</p></div><div class="hero-medallion">${icon("mosque")}<span>ISTIQAMAH</span></div></section><div class="grid daily-grid"><div class="stack"><section class="card prayer-card"><div class="cardhead"><h2>${t("Prayer times")}</h2><span class="countdown" id="prayer-countdown"></span></div>${prayers.length ? `<div class="prayer-strip">${prayers.map((a) => `<div class="prayer-slot ${next?.name === a.name && session.selectedDate === today() ? "next" : ""}">${icon(a.name === "Fajr" ? "sun" : a.name === "Isha" ? "moon" : "mosque")}<div>${t(a.name)}</div><strong>${prayerService.format(a.date)}</strong></div>`).join("")}</div><small>${esc(p.city || p.country)} \xB7 ${esc(p.method)} \xB7 ${esc(p.madhab)} \xB7 ${esc(p.tz)}</small>` : `<p class="muted" style="font-size:12px">${t("Location is used only for local prayer calculations.")}</p><button class="linkbtn" data-action="location">${t("Set your location")} \u2192</button>`}</section><section class="card habits-card"><div class="cardhead"><h2>${t("Daily intentions")}</h2><span class="badge">${completed} / ${hs.filter((h) => !isPaused(h, d)).length} ${t("completed")}</span></div>${p.gender === "Female" ? `<label class="inline-check"><input type="checkbox" id="pause-faith" ${d.pauseFaith ? "checked" : ""}>${t("Pause prayer & fasting today")}</label>` : ""}${CATEGORIES.map(
       (cat) => {
         const habits = hs.filter((h) => h.category === cat);

@@ -1589,3 +1589,105 @@ dialog::backdrop {
 html[lang="en"] .hero h2 {
   font-family: Georgia, serif;
 }
+
+[data-ramadan="true"] {
+  --gold: #946714;
+  --goldsoft: #fff3ce;
+}
+[data-ramadan="true"][data-theme="dark"] {
+  --gold: #e8c76d;
+  --goldsoft: #3f3520;
+}
+[data-ramadan="true"] .hero {
+  display: none;
+}
+.ramadan-card {
+  border: 1px solid var(--gold);
+  background: linear-gradient(140deg, var(--card), var(--goldsoft));
+  margin-bottom: 24px;
+}
+.ramadan-countdowns,
+.ramadan-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+.ramadan-countdowns > div {
+  padding: 16px;
+  background: var(--card);
+  border-radius: 12px;
+  text-align: center;
+}
+.ramadan-countdowns output {
+  display: block;
+  font-size: 24px;
+  color: var(--gold);
+  direction: ltr;
+  font-variant-numeric: tabular-nums;
+}
+.ramadan-checks .inline-check {
+  min-height: 48px;
+  margin: 0;
+}
+.ramadan-planner,
+.ramadan-night {
+  border-top: 1px solid var(--gold);
+  margin-top: 22px;
+  padding-top: 18px;
+}
+.odd-night {
+  border: 1px solid var(--gold);
+  padding: 20px;
+  border-radius: 12px;
+}
+.ramadan-heatmap {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 6px;
+  margin: 20px 0;
+}
+.ramadan-heatmap > div {
+  background: var(--bg);
+  padding: 7px;
+  text-align: center;
+  border-radius: 8px;
+}
+.ramadan-heatmap span,
+.ramadan-heatmap small {
+  display: block;
+}
+.ramadan-heatmap .complete {
+  background: var(--soft);
+  outline: 1px solid var(--green);
+}
+.ramadan-heatmap .paused {
+  background: var(--goldsoft);
+}
+@media (max-width: 600px) {
+  .ramadan-heatmap {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .ramadan-checks {
+    gap: 10px;
+  }
+}
+@media print {
+  .ramadan-print table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+    table-layout: fixed;
+    margin: 18px 0;
+  }
+  .ramadan-print th,
+  .ramadan-print td {
+    border: 1px solid #999;
+    text-align: center;
+    height: 36px;
+    padding: 2px;
+  }
+  .ramadan-print th:first-child {
+    width: 100px;
+  }
+}

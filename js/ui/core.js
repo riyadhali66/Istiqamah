@@ -1,11 +1,13 @@
-import { $, esc, toast } from "../utils.js";
-import { t } from "../i18n.js";
-import { CITY } from "../config.js";
-import { session } from "../session.js";
-import { ui, ensureView } from "./views.js";
-import { drawCharts, ensureCharts } from "./charts.js";
-import { updateOfflineStatus } from "../offline.js";
-import { prayerService } from "../prayer.js";
+import { ramadanService } from "../ramadan.js?v=1.2.0";
+import { drawRamadanChart } from "./ramadan.js?v=1.2.0";
+import { $, esc, toast } from "../utils.js?v=1.2.0";
+import { t } from "../i18n.js?v=1.2.0";
+import { CITY } from "../config.js?v=1.2.0";
+import { session } from "../session.js?v=1.2.0";
+import { ui, ensureView } from "./views.js?v=1.2.0";
+import { drawCharts, ensureCharts } from "./charts.js?v=1.2.0";
+import { updateOfflineStatus } from "../offline.js?v=1.2.0";
+import { prayerService } from "../prayer.js?v=1.2.0";
 
 function options(values, selected, labels = values) {
   return values
@@ -49,6 +51,9 @@ function render() {
     ? "rtl"
     : "ltr";
   document.documentElement.dataset.theme = session.state.settings.theme;
+  document.documentElement.dataset.ramadan = String(
+    ramadanService.context().active,
+  );
   ui.shell();
   $("#main").innerHTML =
     ui.top() +
@@ -62,6 +67,13 @@ function render() {
     ensureCharts()
       .then(() => {
         if (session.page === "progress" && !session.charts.length) drawCharts();
+      })
+      .catch(() => toast("Charts could not be loaded. Your records are safe."));
+  if (session.page === "tools" && session.tool === "ramadan")
+    ensureCharts()
+      .then(() => {
+        if (session.page === "tools" && session.tool === "ramadan")
+          drawRamadanChart();
       })
       .catch(() => toast("Charts could not be loaded. Your records are safe."));
   if (session.page === "settings") updateOfflineStatus();

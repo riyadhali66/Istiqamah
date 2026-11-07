@@ -1,6 +1,6 @@
-import { session } from "../session.js";
-import { $, esc, icon } from "../utils.js";
-import { t } from "../i18n.js";
+import { session } from "../session.js?v=1.2.0";
+import { $, esc, icon } from "../utils.js?v=1.2.0";
+import { t } from "../i18n.js?v=1.2.0";
 
 function view_shell() {
   const p = session.state.profile;

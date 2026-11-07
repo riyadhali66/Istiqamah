@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "istiqamah-v1-1-phase1-20261107-b";
+const CACHE = "istiqamah-v1-2-ramadan-20261108-c";
 const SHELL = [
   "./",
   "./index.html",
@@ -26,6 +26,8 @@ const SHELL = [
   "./js/optional-content.js",
   "./js/prayer.js",
   "./js/quran.js",
+  "./js/ramadan-model.js",
+  "./js/ramadan.js",
   "./js/records.js",
   "./js/reminders.js",
   "./js/schedule.js",
@@ -42,6 +44,7 @@ const SHELL = [
   "./js/ui/kids.js",
   "./js/ui/onboarding.js",
   "./js/ui/progress.js",
+  "./js/ui/ramadan.js",
   "./js/ui/reflections.js",
   "./js/ui/review.js",
   "./js/ui/settings.js",
@@ -55,20 +58,26 @@ const SHELL = [
   "./js/ui/words.js",
   "./js/utils.js",
   "./css/app.css",
+  "./data/adhkar.json",
+  "./data/hadith.json",
+  "./data/names.json",
+  "./data/quran.json",
+  "./data/ramadan-dua.json",
   "./vendor/adhan.js",
   "./vendor/amiri.woff2",
   "./vendor/arabic-core.js",
   "./vendor/chart.js",
   "./vendor/inter.woff2",
-  "./data/hadith.json",
-  "./data/names.json",
-  "./data/quran.json",
 ];
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
+      .then((cache) =>
+        cache.addAll(
+          SHELL.map((path) => new Request(path, { cache: "reload" })),
+        ),
+      )
       .then(() => self.skipWaiting()),
   );
 });
@@ -116,7 +125,7 @@ self.addEventListener("fetch", (event) => {
             clearTimeout(timeout);
           }
         }
-        const cached = await cache.match(request);
+        const cached = await cache.match(request, { ignoreSearch: true });
         if (cached) return cached;
         const response = await fetch(request);
         if (response.ok) await cache.put(request, response.clone());
@@ -130,7 +139,7 @@ self.addEventListener("fetch", (event) => {
   ) {
     event.respondWith(
       caches.open(CACHE).then(async (cache) => {
-        const cached = await cache.match(request);
+        const cached = await cache.match(request, { ignoreSearch: true });
         if (cached) return cached;
         const response = await fetch(request);
         if (response.ok || response.type === "opaque") {

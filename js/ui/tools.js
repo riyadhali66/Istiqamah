@@ -1,8 +1,9 @@
-import { session } from "../session.js";
-import { t } from "../i18n.js";
+import { session } from "../session.js?v=1.2.0";
+import { t } from "../i18n.js?v=1.2.0";
 
 function view_tools() {
   let tabs = [
+    ["ramadan", "Ramadan"],
     ["tasbih", "Tasbih"],
     ["wealth", "Wealth"],
     ["fasting", "Fasting"],
@@ -17,6 +18,7 @@ function view_tools() {
     `<div class="tabs">${tabs.map(([id, title]) => `<button class="tab ${session.tool === id ? "active" : ""}" data-action="tool" data-id="${id}">${t(title)}</button>`).join("")}</div>` +
     (
       {
+        ramadan: () => this.ramadan(),
         tasbih: () => this.tasbih(),
         wealth: () => this.wealth(),
         fasting: () => this.fasting(),

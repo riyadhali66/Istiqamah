@@ -39,15 +39,15 @@ module.exports = async function ({ browser, base, check, seed }) {
       const { context, page, errors } = await open(legacy);
       const result = await page.evaluate(() => ({
         state: Istiqamah.state,
-        original: localStorage.getItem("istiqamah.migration.v1"),
+        original: localStorage.getItem("istiqamah.migration.v2"),
         saved: JSON.parse(localStorage.getItem("istiqamah.v1")),
       }));
       assert.equal(result.original, JSON.stringify(legacy));
-      assert.equal(result.saved.schemaVersion, 1);
+      assert.equal(result.saved.schemaVersion, 2);
       for (const key of Object.keys(legacy))
         assert.deepEqual(result.state[key], legacy[key]);
       const migrated = await page.evaluate(async () => {
-        const { migrate } = await import("./js/storage.js");
+        const { migrate } = await import("./js/storage.js?v=1.2.0");
         const first = migrate(Istiqamah.state);
         return JSON.stringify(first) === JSON.stringify(migrate(first));
       });
@@ -64,7 +64,7 @@ module.exports = async function ({ browser, base, check, seed }) {
         localStorage.setItem("istiqamah.v1", JSON.stringify(data));
         const original = Storage.prototype.setItem;
         Storage.prototype.setItem = function (key, value) {
-          if (key === "istiqamah.migration.v1")
+          if (key === "istiqamah.migration.v2")
             throw new DOMException("Quota", "QuotaExceededError");
           return original.call(this, key, value);
         };
@@ -159,7 +159,7 @@ module.exports = async function ({ browser, base, check, seed }) {
       assert(!text.includes("profile"));
       const result = await page.evaluate(async (env) => {
         const { decryptBackup, encryptBackup } =
-          await import("./js/backup-crypto.js");
+          await import("./js/backup-crypto.js?v=1.2.0");
         let wrong = false,
           tampered = false,
           bounds = false;
@@ -233,7 +233,7 @@ module.exports = async function ({ browser, base, check, seed }) {
     async () => {
       const { context, page } = await open(legacy);
       await page.evaluate(async () => {
-        const { snapshots } = await import("./js/snapshots.js");
+        const { snapshots } = await import("./js/snapshots.js?v=1.2.0");
         await Istiqamah.storage.snapshot();
         for (let i = 9; i >= 1; i--) {
           const date = Istiqamah.offsetDay(Istiqamah.today(), -i),
@@ -276,7 +276,7 @@ module.exports = async function ({ browser, base, check, seed }) {
     async () => {
       const { context, page } = await open(legacy);
       const result = await page.evaluate(async () => {
-        const { snapshots } = await import("./js/snapshots.js");
+        const { snapshots } = await import("./js/snapshots.js?v=1.2.0");
         const old = snapshots.checkpoint;
         snapshots.checkpoint = async () => {
           throw Error("quota");

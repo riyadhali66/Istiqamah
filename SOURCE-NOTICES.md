@@ -28,16 +28,38 @@ The selection covers worship, Quran study, supplication, patience, charity, grat
 
 `ASSET-SHA256.txt` records checksums of the distributed vendor and data files. Vendored files are loaded from the app's own origin; there are no runtime third-party library dependencies. The application uses `js/` ES modules and `css/app.css`; the service worker remains separately addressable. Quran, hadith and Names text was split without altering source text. No new religious translation or paraphrase was introduced.
 
-## Optional sources, excluded from distribution
+## Licensed core adhkar — v1.2.0
 
-Neither the adhan recordings nor Azkar DB has an explicit upstream license. Attribution is not permission. They have been **removed from distributed assets and the service-worker install list**, rather than assigning them a license. Settings explains the uncertainty and permits an explicit download only if the provider's terms permit the user's use. The app sends no personal entries; GitHub receives the normal network request metadata. Downloading is optional, checksum-verified, stored only in that browser's IndexedDB and removable in Settings. No download is inferred from an old sound selection. Missing files cause a prompt rather than an automatic request.
+`data/adhkar.json` copies [Seen Arabic Morning-And-Evening-Adhkar-DB](https://github.com/Seen-Arabic/Morning-And-Evening-Adhkar-DB) at commit **`29d7623fede52eca835a789025dfda866e8cfe44`**, inspected 2026-11-08. **MIT License, copyright © 2024 Seen Arabic**, retained verbatim as `vendor/LICENSE-adhkar-seen.txt`. The upstream README explicitly licenses the project under MIT and identifies its Arabic/reference and English-translation provenance (Hisn Muslim/Sunnah and cited books). This release copies its Arabic and English fields without generating, translating, paraphrasing or normalizing religious text. No licensed Urdu translation was selected; Urdu/Malayalam/Hindi display the Arabic source label. Source audio URLs are not copied or played.
 
-| Optional source | Pinned version / link | License status | SHA-256 of original upstream bytes |
+The 34 source rows expand by the source's morning/evening type to 50 app rows (26 morning, 24 evening). References and repeat counts are verbatim. Reviewed `legacyKey` aliases preserve existing count keys; unmatched counts remain visible without reusing them for different text. See `docs/PHASE-2-NOTES.md`.
+
+| Pinned upstream file | SHA-256 |
+| --- | --- |
+| [ar.json](https://raw.githubusercontent.com/Seen-Arabic/Morning-And-Evening-Adhkar-DB/29d7623fede52eca835a789025dfda866e8cfe44/ar.json) | `9e0dd6a10d26ddc0e2b36b94098c287644996c7f81b707f8ad24f1ce40b8c821` |
+| [en.json](https://raw.githubusercontent.com/Seen-Arabic/Morning-And-Evening-Adhkar-DB/29d7623fede52eca835a789025dfda866e8cfe44/en.json) | `eec053c4138bed6f3ec7dc3c0e06e926a935dca24663788e5b97a0bfb5f71896` |
+| [LICENSE](https://raw.githubusercontent.com/Seen-Arabic/Morning-And-Evening-Adhkar-DB/29d7623fede52eca835a789025dfda866e8cfe44/LICENSE) | `a72f0268608c31d32da8e5a9c934fef80cc8f377eb018b83f0d660a2894b0825` |
+
+## Laylat al-Qadr narration — v1.2.0
+
+`data/ramadan-dua.json` copies the **complete** Arabic and English narration for **Jami at-Tirmidhi 3513**, from [fawazahmed0/hadith-api release 1](https://github.com/fawazahmed0/hadith-api/tree/1), editions `ara-tirmidhi` / `eng-tirmidhi`. License: **The Unlicense**, retained in existing `vendor/LICENSE-hadith-api.txt`. References link to [Tirmidhi 3513](https://sunnah.com/tirmidhi:3513). The Arabic source's `كَرِيمٌ` variant is preserved exactly; no textual correction or new translation is made.
+
+All source grades are retained in the JSON: Sahih (Ahmad Muhammad Shakir, Al-Albani), Hasan Sahih (Bashar Awad Maarouf), and Daif (Zubair Ali Zai). The card identifies the accepted Sahih/Hasan source grades, states that source grading differs and links to the complete reference; it makes no independent authentication judgment. The existing daily hadith Sahih/Hasan filter is unchanged.
+
+| Source file (release 1) | SHA-256 |
+| --- | --- |
+| [ara-tirmidhi/3513.json](https://raw.githubusercontent.com/fawazahmed0/hadith-api/1/editions/ara-tirmidhi/3513.json) | `e93d8a8d3a0eca556678008ea193ba6ea6eb7e47fd9ee654ca71cbcb5bda7f3f` |
+| [eng-tirmidhi/3513.json](https://raw.githubusercontent.com/fawazahmed0/hadith-api/1/editions/eng-tirmidhi/3513.json) | `c7d62489bf5d5bc2b7678aa927034b6b961dbcdf463c805d9b49d9db37ca10b6` |
+
+`npm run test:sources` verifies the text, counts, references, translations, license and grading against these pinned files. Distributed derivatives and the license are checksummed in `ASSET-SHA256.txt`; source hashes appear there as comments.
+
+## Optional adhan recordings, excluded from distribution
+
+The two adhan recordings have no explicit upstream license. Attribution is not permission. They remain **excluded from distributed assets and the worker install list**. Settings permits an explicit credited download only if the provider's terms permit the user's use. Downloading sends no personal entries; GitHub receives the normal request metadata. Files are SHA-256 verified, stored in local IndexedDB and removable in Settings. Old sound selections do not trigger automatic downloads.
+
+| Source | Pinned version | License status | SHA-256 |
 | --- | --- | --- | --- |
-| Azkar DB, morning/evening rows | [azkar.json](https://raw.githubusercontent.com/osamayy/azkar-db/fbdfa017782c907fd0ca4ee2726060cbc527072f/azkar.json), commit `fbdfa017782c907fd0ca4ee2726060cbc527072f` | No explicit license; not bundled | `071893211f6c711d7fb389826a7bcc79ac1ad2f0c13bdb4cc3bd38e871480a6c` |
-| Makkah adhan | [Athan-MP3](https://github.com/abodehq/Athan-MP3/tree/cf1a9dd4f1e5e10009439099c5af74479ad332c0/Sounds), `Athan Makkah.mp3`, commit `cf1a9dd4f1e5e10009439099c5af74479ad332c0` | No explicit license; not bundled | `4ab22d15fcea1a70f636b50f21e3f82597fa583ec2a21065373b3bde87482647` |
-| Mishary Alafasi adhan | Same pinned Athan-MP3 commit, `Athan Mishary Alafasi.mp3` | No explicit license; not bundled | `06a9ef43abf7a8907df477a878704d0679d941886273b1a1834e15c2934a1629` |
+| Makkah adhan | [abodehq/Athan-MP3](https://github.com/abodehq/Athan-MP3/tree/cf1a9dd4f1e5e10009439099c5af74479ad332c0/Sounds), `Athan Makkah.mp3`, commit `cf1a9dd4f1e5e10009439099c5af74479ad332c0` | No explicit license; not bundled | `4ab22d15fcea1a70f636b50f21e3f82597fa583ec2a21065373b3bde87482647` |
+| Mishary Alafasi adhan | Same pinned commit, `Athan Mishary Alafasi.mp3` | No explicit license; not bundled | `06a9ef43abf7a8907df477a878704d0679d941886273b1a1834e15c2934a1629` |
 
-Azkar rows are mapped to the previous field names and retain their original ordering and repeat counts. This preserves existing `morning-N`/`evening-N` saved counters. The Quran font with unclear separate redistribution terms (`uthmani.woff2`) is removed; Arabic uses existing Amiri under SIL OFL 1.1. The inspected rn0x Hisn Al Muslim repository has no confirmed license in this review and is not included.
-
-Pinned optional-source hashes also appear as comments in `ASSET-SHA256.txt`; their bytes are not shipped. `js/optional-content.js` enforces those hashes before local installation. `npm run test:optional` verifies the current pinned sources without committing downloaded fixtures.
+Phase 1's optional unlicensed Azkar source is retired in v1.2.0. Its personal count keys remain intact; the app no longer offers or reads that data download. The earlier unclear-license Quran font remains removed; SIL OFL Amiri is used for Arabic.
