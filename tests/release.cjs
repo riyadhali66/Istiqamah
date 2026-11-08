@@ -3,7 +3,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
 const base='http://127.0.0.1:8767',server=spawn('python3',['-m','http.server','8767','--bind','127.0.0.1'],{stdio:'ignore'}),shots=path.resolve('docs/screenshots/release-2.1.0');fs.mkdirSync(shots,{recursive:true});let browser;
 (async()=>{
  for(let i=0;i<50;i++){try{if((await fetch(base)).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
- browser=await chromium.launch({executablePath:'/usr/bin/chromium',args:['--no-sandbox'],headless:true});
+ browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||(require('fs').existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),args:['--no-sandbox'],headless:true});
  const c=await browser.newContext({viewport:{width:390,height:844},timezoneId:'Asia/Dubai',acceptDownloads:true}),p=await c.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.clock.install({time:new Date('2027-02-28T08:00:00+04:00')});
  await c.addInitScript(()=>{if(!sessionStorage.getItem('started')){localStorage.setItem('istiqamah.releaseSeen.2.1.0','seen');sessionStorage.setItem('started','1');}});

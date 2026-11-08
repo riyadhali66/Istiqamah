@@ -4,7 +4,7 @@ const base='http://127.0.0.1:8766',server=spawn('python3',['-m','http.server','8
 let browser,n=0;const check=async(name,fn)=>{await fn();console.log(`PASS Phase 2 ${++n}: ${name}`);};
 (async()=>{
  for(let i=0;i<50;i++){try{if((await fetch(base)).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
- browser=await chromium.launch({executablePath:'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+ browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||(require('fs').existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),headless:true,args:['--no-sandbox']});
  const context=await browser.newContext({viewport:{width:390,height:844},timezoneId:'Asia/Dubai'});
  await context.addInitScript(()=>localStorage.setItem('istiqamah.releaseSeen.2.1.0','seen'));
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
