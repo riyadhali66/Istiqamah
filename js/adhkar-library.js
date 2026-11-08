@@ -1,8 +1,8 @@
-import { entries, byId, aliases, archive } from './adhkar-data.js?v=2.1.0';
-import { session } from './session.js?v=2.1.0';
-import { getDay } from './records.js?v=2.1.0';
-import { storage } from './storage.js?v=2.1.0';
-import { today } from './dates.js?v=2.1.0';
+import { entries, byId, aliases, archive } from './adhkar-data.js?v=2.1.1';
+import { session } from './session.js?v=2.1.1';
+import { getDay } from './records.js?v=2.1.1';
+import { storage } from './storage.js?v=2.1.1';
+import { today } from './dates.js?v=2.1.1';
 const normalize = s => String(s).normalize('NFKD').replace(/[\u064B-\u065F\u0670\u0640]/g,'').toLocaleLowerCase();
 export const adhkarLibrary = {
   entries, archive,

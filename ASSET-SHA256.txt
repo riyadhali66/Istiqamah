@@ -1,5 +1,5 @@
-# Distributed assets and generated catalog — 2.1.0
-# Optional unlicensed audio/font files are excluded.
+# Distributed assets — 2.1.1; native package integrity pins are in package-lock.json.
+# Optional unlicensed audio/font files remain excluded.
 58305843e25ab9658fb1e0905d92673f48144d8147a87a232525c0632344fd5d  data/AZKAR-REUSE.txt
 9af8aec32f373042e31d94a9dbbc57ab965e2ab532a1de070408bf6d9c58a328  data/adhkar-legacy.json
 5add9ff5d75c0e027149d07be8ce087abc70f970dbd1fd89d1ce9efe80a8fa61  data/adhkar.json
@@ -11,6 +11,7 @@ a340d678e5e7c933266681707250fa76c72929fe0cc8ecaf9b77d6f305f5886b  data/ramadan-d
 a72f0268608c31d32da8e5a9c934fef80cc8f377eb018b83f0d660a2894b0825  vendor/LICENSE-adhkar-seen.txt
 18aabf190848725e2576eefb5c29ba06aac1029d02132252a7f312eac2e50cf3  vendor/LICENSE-amiri.txt
 02e1b128676a57a2a87f941400b7df83a1a56d926fcc384c425d1e75a9355c54  vendor/LICENSE-arabic-core.txt
+21c8f20c5f565cc323575133dd645d88cb3e8641f8119ae5cce68726f8b9a78a  vendor/LICENSE-capacitor.txt
 41a84aa2caba645f966a18d9c2056b73e6d3a81d80bc0046bc0011a2634d4cce  vendor/LICENSE-chart.txt
 6b0382b16279f26ff69014300541967a356a666eb0b91b422f6862f6b7dad17e  vendor/LICENSE-hadith-api.txt
 18aabf190848725e2576eefb5c29ba06aac1029d02132252a7f312eac2e50cf3  vendor/LICENSE-inter.txt
@@ -22,3 +23,4 @@ a2298b834d18de2245e9b9ca473261e9e2effccb3194faf311047b575118c825  vendor/LICENSE
 e4cf4d144b222634f2e64ff707cd57b953f8de4b65b231cd5ac6bde114648e4d  vendor/chart.js
 dd05e326cf8eac3b55acecf29c842ed73e6e6dd06491cf47f7e8800680ab3e33  vendor/inter.woff2
 9e578077580f37813e570c5512f08fcad983f5c5de652e22b0a1d51861090e89  js/adhkar-data.js
+d517abb6e49d2602e9b3397939ad83d5d92cab9c687f95736eb3599cca8607f2  privacy.html

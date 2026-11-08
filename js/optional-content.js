@@ -1,4 +1,4 @@
-import { transact } from "./snapshots.js?v=2.1.0";
+import { transact } from "./snapshots.js?v=2.1.1";
 // Intentionally absent from the install cache. Requests occur only after an explicit download tap.
 export const OPTIONAL_SOURCES = {
   uthmani: {

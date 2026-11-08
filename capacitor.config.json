@@ -1,0 +1,29 @@
+{
+  "appId": "com.riyadhali66.istiqamah",
+  "appName": "Istiqamah",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#184f40"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": false,
+      "backgroundColor": "#184f40",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "backgroundColor": "#184f40",
+      "style": "DARK",
+      "overlaysWebView": false
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_prayer",
+      "iconColor": "#184f40"
+    },
+    "SystemBars": {
+      "style": "DARK",
+      "insetsHandling": "native"
+    }
+  }
+}

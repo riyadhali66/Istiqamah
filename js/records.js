@@ -1,8 +1,8 @@
-import { storage } from "./storage.js?v=2.1.0";
-import { session } from "./session.js?v=2.1.0";
-import { hijriService } from "./hijri.js?v=2.1.0";
-import { offsetDay, today } from "./dates.js?v=2.1.0";
-import { render } from "./ui/core.js?v=2.1.0";
+import { storage } from "./storage.js?v=2.1.1";
+import { session } from "./session.js?v=2.1.1";
+import { hijriService } from "./hijri.js?v=2.1.1";
+import { offsetDay, today } from "./dates.js?v=2.1.1";
+import { render } from "./ui/core.js?v=2.1.1";
 
 function save() {
   storage.save();

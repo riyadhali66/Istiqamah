@@ -1,5 +1,5 @@
-import { ramadanDefaults } from './ramadan-model.js?v=2.1.0';
-import { aliases, byId } from './adhkar-data.js?v=2.1.0';
+import { ramadanDefaults } from './ramadan-model.js?v=2.1.1';
+import { aliases, byId } from './adhkar-data.js?v=2.1.1';
 // Legacy fields remain archival: no text is matched by an array position.
 export function upgradeRecords(input) {
   const s = structuredClone(input);

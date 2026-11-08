@@ -1,13 +1,13 @@
-import { ramadanService } from "../ramadan.js?v=2.1.0";
-import { drawRamadanChart } from "./ramadan.js?v=2.1.0";
-import { $, esc, toast } from "../utils.js?v=2.1.0";
-import { t } from "../i18n.js?v=2.1.0";
-import { CITY } from "../config.js?v=2.1.0";
-import { session } from "../session.js?v=2.1.0";
-import { ui, ensureView } from "./views.js?v=2.1.0";
-import { drawCharts, ensureCharts } from "./charts.js?v=2.1.0";
-import { updateOfflineStatus } from "../offline.js?v=2.1.0";
-import { prayerService } from "../prayer.js?v=2.1.0";
+import { ramadanService } from "../ramadan.js?v=2.1.1";
+import { drawRamadanChart } from "./ramadan.js?v=2.1.1";
+import { $, esc, toast } from "../utils.js?v=2.1.1";
+import { t } from "../i18n.js?v=2.1.1";
+import { CITY } from "../config.js?v=2.1.1";
+import { session } from "../session.js?v=2.1.1";
+import { ui, ensureView } from "./views.js?v=2.1.1";
+import { drawCharts, ensureCharts } from "./charts.js?v=2.1.1";
+import { updateOfflineStatus } from "../offline.js?v=2.1.1";
+import { prayerService } from "../prayer.js?v=2.1.1";
 
 function options(values, selected, labels = values) {
   return values

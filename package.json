@@ -1,6 +1,6 @@
 {
   "name": "istiqamah",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": true,
   "description": "A local-first Muslim life companion",
   "scripts": {
@@ -10,9 +10,27 @@
     "test:sources": "node tests/sources.cjs",
     "test:phase2": "node tests/phase2.cjs",
     "test:release": "node tests/release.cjs",
-    "test:all": "npm test && npm run test:phase2 && npm run test:release && npm run test:sources && npm run test:optional"
+    "test:all": "npm test && npm run test:phase2 && npm run test:release && npm run test:sources && npm run test:optional && npm run test:native && npm run test:native-browser && npm run test:paths",
+    "build:web": "node tools/build-web.mjs",
+    "android:sync": "npm run build:web && cap sync android",
+    "test:native": "node tests/native.cjs",
+    "test:paths": "node tests/paths.cjs",
+    "test:native-browser": "node tests/native-browser.cjs"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
+    "esbuild": "^0.28.2",
     "playwright": "1.58.2"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/browser": "^8.0.5",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4"
   }
 }

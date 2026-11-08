@@ -1,0 +1,98 @@
+name: Android APK
+on:
+  pull_request:
+    branches: [main]
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - run: npm ci
+      - run: npm run test:native
+      - run: npm run android:sync
+      - name: Debug APK for every PR
+        run: bash android/gradlew -p android assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: istiqamah-debug-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Prepare signing (version tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_BASE64" && test -n "$KEYSTORE_PASSWORD" && test -n "$KEY_ALIAS" && test -n "$KEY_PASSWORD"
+          test "$GITHUB_REF_NAME" = "v$(node -p 'require("./package.json").version')"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/istiqamah.jks"
+          chmod 600 "$RUNNER_TEMP/istiqamah.jks"
+      - name: Signed APK and AAB
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/istiqamah.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: bash android/gradlew -p android assembleRelease bundleRelease --no-daemon
+      - name: Verify signed release assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify android/app/build/outputs/apk/release/app-release.apk
+          jarsigner -verify android/app/build/outputs/bundle/release/app-release.aab | tee "$RUNNER_TEMP/aab-verification.txt"
+          grep -q "jar verified" "$RUNNER_TEMP/aab-verification.txt"
+          node tools/release-notes.mjs > release-notes.md
+          cp android/app/build/outputs/apk/release/app-release.apk "istiqamah-${GITHUB_REF_NAME}.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "istiqamah-${GITHUB_REF_NAME}.aab"
+          sha256sum "istiqamah-${GITHUB_REF_NAME}.apk" "istiqamah-${GITHUB_REF_NAME}.aab" > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: signed-release
+          path: |
+            istiqamah-v*.apk
+            istiqamah-v*.aab
+            SHA256SUMS.txt
+            release-notes.md
+      - name: Delete temporary signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/istiqamah.jks"
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: signed-release
+          path: dist
+      - name: Publish verified APK and AAB
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" dist/*.apk dist/*.aab dist/SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --verify-tag --title "Istiqamah $GITHUB_REF_NAME" --notes-file dist/release-notes.md

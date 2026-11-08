@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.1 — Android app and static hosting
+
+- Add Capacitor Android app `com.riyadhali66.istiqamah`, offline bundled app-only assets, emerald/adaptive branding and Android back navigation. Web remains buildless and keeps its service worker; native never registers one.
+- Add optional local seven-day prayer/habit/Ramadan reminders using the same calculation and time zone, per-prayer switches, offsets, permission explanations, exact/inexact fallback, app/settings refresh and reboot restoration. System-default sound only.
+- Add native share-sheet plain/encrypted exports, Android file-picker imports and first-run website-backup guidance. Keep schema 3, exact-byte migration safety, private local records and seven daily copies; disable Android automatic backup.
+- Add PR debug APK artifacts and tag-only signed APK/AAB release workflow with secret-based signing. Add privacy/store drafts and phone/signing instructions.
+- Add static-only Cloudflare configuration with a deployment allowlist, root/subfolder/offline tests, native model/plugin mocks and mobile bilingual screenshots.
+
 ## 2.1.0 — Unified safe release
 
 - Combine PR #3 modular Phase 1/Ramadan work with the wider permitted adhkar categories from main. Version 2.0.0 was the interim live single-file Phase 2 build (`fd79768`); it was not the modular release.

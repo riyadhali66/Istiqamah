@@ -1,5 +1,6 @@
-import { t } from "./i18n.js?v=2.1.0";
-import { session } from "./session.js?v=2.1.0";
+import { isNative,shareBackup } from "./native-platform.js?v=2.1.1";
+import { t } from "./i18n.js?v=2.1.1";
+import { session } from "./session.js?v=2.1.1";
 
 const $ = (s) => document.querySelector(s),
   $$ = (s) => [...document.querySelectorAll(s)],
@@ -34,6 +35,7 @@ function money(n) {
   }).format(Number(n) || 0);
 }
 function download(name, text, type) {
+  if(isNative()){shareBackup(name,text).catch(()=>toast("Could not share backup. Check available storage."));return;}
   const url = URL.createObjectURL(new Blob([text], { type }));
   const a = document.createElement("a");
   a.href = url;

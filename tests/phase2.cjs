@@ -6,7 +6,7 @@ let browser,n=0;const check=async(name,fn)=>{await fn();console.log(`PASS Phase 
  for(let i=0;i<50;i++){try{if((await fetch(base)).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
  browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||(require('fs').existsSync('/usr/bin/chromium')?'/usr/bin/chromium':undefined),headless:true,args:['--no-sandbox']});
  const context=await browser.newContext({viewport:{width:390,height:844},timezoneId:'Asia/Dubai'});
- await context.addInitScript(()=>localStorage.setItem('istiqamah.releaseSeen.2.1.0','seen'));
+ await context.addInitScript(()=>localStorage.setItem('istiqamah.releaseSeen.2.1.1','seen'));
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.clock.install({time:new Date('2027-02-09T08:00:00+04:00')});await page.goto(base);await page.waitForFunction(()=>!!window.Istiqamah);
  await page.locator('[data-draft="city"]').fill('Dubai');await page.locator('[data-draft="city"]').blur();await page.locator('[data-action="skip-wizard"]').click();await page.locator('[data-action="finish-wizard"]').click();
@@ -14,7 +14,7 @@ let browser,n=0;const check=async(name,fn)=>{await fn();console.log(`PASS Phase 
  const nav=async id=>{if(await page.locator('[data-action="ramadan-setup-skip"]').isVisible())await page.locator('[data-action="ramadan-setup-skip"]').click();await page.locator(`[data-action="nav"][data-id="${id}"]`).first().click();};
  const tool=async id=>{await nav('tools');await page.locator(`[data-action="tool"][data-id="${id}"]`).click();};
  await check('113 original stable IDs retained, 10 selectable categories, isolated provenance',async()=>{
-  const d=await page.evaluate(async()=>{const m=await import('./js/adhkar-data.js?v=2.1.0');return{entries:m.entries,archive:m.archive};});
+  const d=await page.evaluate(async()=>{const m=await import('./js/adhkar-data.js?v=2.1.1');return{entries:m.entries,archive:m.archive};});
   assert.equal(Object.keys(d.archive).length,113);assert.equal(new Set(d.entries.map(e=>e.category)).size,10);assert.equal(new Set(d.entries.map(e=>e.id)).size,d.entries.length);
   for(const e of Object.values(d.archive)){const hash=crypto.createHash('sha256').update(e.sourceCategory+'\0'+e.text+'\0'+e.reference).digest('hex');assert.equal(e.id,'azkar-'+hash.slice(0,20));assert.equal(e.provenance.rowSha256,hash);}
   for(const e of d.entries)if(e.id.startsWith('azkar-')){assert.deepEqual(e.translations,{});assert.equal(e.text,d.archive[e.id].text);}
@@ -41,7 +41,7 @@ let browser,n=0;const check=async(name,fn)=>{await fn();console.log(`PASS Phase 
   const independent=await page.evaluate(id=>{const a=Istiqamah,e=a.adhkarLibrary.resolve(id),y=a.offsetDay(a.today(),-1);a.adhkarLibrary.set(e,4,y);return [a.adhkarLibrary.count(e,y),a.adhkarLibrary.count(e)];},id);assert.deepEqual(independent,[4,0]);
  });
  await check('legacy positional migration is explicit, idempotent, unmatched counts remain visible',async()=>{
-  const r=await page.evaluate(async()=>{const {migrate}=await import('./js/storage.js?v=2.1.0');const s=structuredClone(Istiqamah.state);delete s.schemaVersion;delete s.adhkarPrefs;for(const d of Object.values(s.days)){delete d.adhkarCounts;delete d.earlierAdhkar;}s.tasbih.selected='morning-1';s.days[Istiqamah.today()].adhkar={'morning-1':2,'morning-14':9};const m=migrate(s);return{m,s,twice:JSON.stringify(m)===JSON.stringify(migrate(m)),key:Istiqamah.today()};});
+  const r=await page.evaluate(async()=>{const {migrate}=await import('./js/storage.js?v=2.1.1');const s=structuredClone(Istiqamah.state);delete s.schemaVersion;delete s.adhkarPrefs;for(const d of Object.values(s.days)){delete d.adhkarCounts;delete d.earlierAdhkar;}s.tasbih.selected='morning-1';s.days[Istiqamah.today()].adhkar={'morning-1':2,'morning-14':9};const m=migrate(s);return{m,s,twice:JSON.stringify(m)===JSON.stringify(migrate(m)),key:Istiqamah.today()};});
   assert(r.twice);assert.equal(r.m.adhkarPrefs.selected,'seen-morning-4');assert.equal(r.m.days[r.key].adhkarCounts['seen-morning-4'],2);assert.equal(r.m.days[r.key].earlierAdhkar['morning-14'],9);assert.deepEqual(r.m.days[r.key].adhkar,r.s.days[r.key].adhkar);
  });
  await check('manual Ramadan boundaries, paused fasting and regular-plan restoration',async()=>{

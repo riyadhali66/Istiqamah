@@ -1,9 +1,9 @@
-import { adhkarLibrary as library } from '../adhkar-library.js?v=2.1.0';
-import { getDay } from '../records.js?v=2.1.0';
-import { today } from '../dates.js?v=2.1.0';
-import { session } from '../session.js?v=2.1.0';
-import { t } from '../i18n.js?v=2.1.0';
-import { esc } from '../utils.js?v=2.1.0';
+import { adhkarLibrary as library } from '../adhkar-library.js?v=2.1.1';
+import { getDay } from '../records.js?v=2.1.1';
+import { today } from '../dates.js?v=2.1.1';
+import { session } from '../session.js?v=2.1.1';
+import { t } from '../i18n.js?v=2.1.1';
+import { esc } from '../utils.js?v=2.1.1';
 export function earlierProgress(key=today()) {
  const old=getDay(key).earlierAdhkar || {};
  return Object.entries(old).some(([,n])=>n>0)?`<details class="card"><summary>${t('Earlier counter progress')}</summary><p>${t('Earlier entries are kept unchanged; some source entries differ.')}</p>${Object.entries(old).filter(([,n])=>n>0).map(([id,n])=>{const e=library.archive[id];return `<article><strong>${esc(id)}: ${n}${(session.state.adhkarPrefs.earlierFavorites || []).includes(id)?" ★":""}</strong>${e?`<p class="quote" lang="ar" dir="rtl">${esc(e.text)}</p><p>${esc(e.reference)} · Azkar DB</p>`:''}</article>`;}).join('')}</details>`:'';

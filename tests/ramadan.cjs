@@ -34,7 +34,7 @@ module.exports = async ({ browser, base, check, seed }) => {
   async function setDate(page, date) {
     await page.clock.setFixedTime(new Date(date + "T08:00:00+04:00"));
     await page.evaluate(async () => {
-      const { session } = await import("./js/session.js?v=2.1.0");
+      const { session } = await import("./js/session.js?v=2.1.1");
       session.selectedDate = Istiqamah.today();
       Istiqamah.render();
     });
@@ -348,7 +348,7 @@ module.exports = async ({ browser, base, check, seed }) => {
     async () => {
       const { context, page } = await open("2026-11-08");
       const result = await page.evaluate(async () => {
-        const { migrate } = await import("./js/storage.js?v=2.1.0");
+        const { migrate } = await import("./js/storage.js?v=2.1.1");
         return {
           state: Istiqamah.state,
           original: localStorage.getItem("istiqamah.migration.v3"),

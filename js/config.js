@@ -1,4 +1,4 @@
-import { ramadanDefaults } from "./ramadan-model.js?v=2.1.0";
+import { ramadanDefaults } from "./ramadan-model.js?v=2.1.1";
 const CATEGORIES = [
   "Faith",
   "Health & Fitness",

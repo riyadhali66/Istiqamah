@@ -1,6 +1,6 @@
-import { t } from "../i18n.js?v=2.1.0";
-import { session } from "../session.js?v=2.1.0";
-import { esc } from "../utils.js?v=2.1.0";
+import { t } from "../i18n.js?v=2.1.1";
+import { session } from "../session.js?v=2.1.1";
+import { esc } from "../utils.js?v=2.1.1";
 
 function view_words() {
   return `<div class="grid"><section class="card"><h2>${t("Word log")}</h2><form id="word-form"><label>${t("Word")}</label><input name="word" required maxlength="120"><label>${t("Meaning")}</label><input name="meaning" required maxlength="500"><label>${t("Example sentence")}</label><textarea name="example" maxlength="1000"></textarea><button class="btn section-gap">${t("Add word")}</button></form></section><section class="card"><div class="cardhead"><h2>${t("Review words")}</h2><span class="badge">${session.state.words.length}</span></div>${

@@ -1,5 +1,5 @@
-import { session } from "../session.js?v=2.1.0";
-import { t } from "../i18n.js?v=2.1.0";
+import { session } from "../session.js?v=2.1.1";
+import { t } from "../i18n.js?v=2.1.1";
 
 function view_tools() {
   let tabs = [

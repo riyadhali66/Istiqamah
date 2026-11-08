@@ -1,16 +1,17 @@
-import { upgradeRecords } from "./migrations.js?v=2.1.0";
-import { ramadanDefaults, validRamadan } from "./ramadan-model.js?v=2.1.0";
-import { session } from "./session.js?v=2.1.0";
+import { validNativePrefs } from "./native-model.js?v=2.1.1";
+import { upgradeRecords } from "./migrations.js?v=2.1.1";
+import { ramadanDefaults, validRamadan } from "./ramadan-model.js?v=2.1.1";
+import { session } from "./session.js?v=2.1.1";
 import {
   fresh,
   defaults,
   CATEGORIES,
   STRUGGLES,
   METHODS,
-} from "./config.js?v=2.1.0";
-import { toast, download } from "./utils.js?v=2.1.0";
-import { today } from "./dates.js?v=2.1.0";
-import { snapshots } from "./snapshots.js?v=2.1.0";
+} from "./config.js?v=2.1.1";
+import { toast, download } from "./utils.js?v=2.1.1";
+import { today } from "./dates.js?v=2.1.1";
+import { snapshots } from "./snapshots.js?v=2.1.1";
 
 export const SCHEMA_VERSION = 3;
 export function hasUnsafeKeys(value) {
@@ -83,6 +84,7 @@ export const storage = {
       const serialized = JSON.stringify(session.state);
       localStorage.setItem(this.key, serialized);
       lastSaved = serialized;
+      window.dispatchEvent(new Event("istiqamah:saved"));
       this.snapshot().catch(() => {
         if (!session.backupWarning)
           toast("Safety copies are unavailable. Export a file backup.");
@@ -171,6 +173,7 @@ function validate(s) {
     num(h.weight, 0.01, 100) &&
     text(h.unit, 30);
   if (hasUnsafeKeys(s)) return false;
+  if(s?.settings?.nativeNotifications!=null&&!validNativePrefs(s.settings.nativeNotifications))return false;
   if (
     !obj(s) ||
     s.version !== 1 ||

@@ -1,17 +1,17 @@
-import { ramadanService } from "./ramadan.js?v=2.1.0";
-import { prayerService } from "./prayer.js?v=2.1.0";
-import { session } from "./session.js?v=2.1.0";
-import { CATEGORIES, timezone } from "./config.js?v=2.1.0";
-import { modal } from "./ui/core.js?v=2.1.0";
-import { t } from "./i18n.js?v=2.1.0";
-import { $, download, esc, icon, money } from "./utils.js?v=2.1.0";
-import { offsetDay } from "./dates.js?v=2.1.0";
+import { ramadanService } from "./ramadan.js?v=2.1.1";
+import { prayerService } from "./prayer.js?v=2.1.1";
+import { session } from "./session.js?v=2.1.1";
+import { CATEGORIES, timezone } from "./config.js?v=2.1.1";
+import { modal } from "./ui/core.js?v=2.1.1";
+import { t } from "./i18n.js?v=2.1.1";
+import { $, download, esc, icon, money } from "./utils.js?v=2.1.1";
+import { offsetDay } from "./dates.js?v=2.1.1";
 import {
   isPaused,
   monthKeys,
   monthlyHabits,
   score,
-} from "./records.js?v=2.1.0";
+} from "./records.js?v=2.1.1";
 
 function currentSchedule(key) {
   const prayers = prayerService.calculate(key),

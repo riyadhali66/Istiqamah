@@ -1,5 +1,5 @@
-import { session } from './session.js?v=2.1.0';
-import { adhkarLibrary as library } from './adhkar-library.js?v=2.1.0';
+import { session } from './session.js?v=2.1.1';
+import { adhkarLibrary as library } from './adhkar-library.js?v=2.1.1';
 const adhkarService = {
  list(period) { return library.list(period); },
  key(period,i) {return this.list(period)[i]?.id || '';},

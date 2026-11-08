@@ -1,0 +1,27 @@
+# Deny by default; allow only the static app. No Worker script/build step.
+/*
+!/index.html
+!/sw.js
+!/manifest.webmanifest
+!/privacy.html
+!/icon*.svg
+!/icon*.png
+!/js/
+!/js/**
+!/css/
+!/css/**
+!/data/
+!/data/**
+!/vendor/
+!/vendor/**
+tests/
+docs/
+tools/
+node_modules/
+android/
+www/
+test-results/
+package*.json
+**/*.md
+.git/
+.github/

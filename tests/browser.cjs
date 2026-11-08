@@ -52,7 +52,7 @@ async function tool(page, id) {
     args: ["--no-sandbox"],
   });
   const createContext=browser.newContext.bind(browser);
-  browser.newContext=async (...args)=>{const c=await createContext(...args);await c.addInitScript(()=>localStorage.setItem('istiqamah.releaseSeen.2.1.0','seen'));return c;};
+  browser.newContext=async (...args)=>{const c=await createContext(...args);await c.addInitScript(()=>localStorage.setItem('istiqamah.releaseSeen.2.1.1','seen'));return c;};
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
     acceptDownloads: true,
@@ -405,7 +405,7 @@ async function tool(page, id) {
       await page.evaluate(async () => {
         Istiqamah.adhkarLibrary.entries.splice(0,Infinity,...window.savedCounterEntries);
         SOURCE_DATA.adhkar = await (
-          await fetch("data/adhkar.json?v=2.1.0")
+          await fetch("data/adhkar.json?v=2.1.1")
         ).json();
         Istiqamah.state.adhkarPrefs.selected = "";
         Istiqamah.storage.save();

@@ -1,2 +1,4 @@
 # Preserve upstream permission-file bytes, including original trailing spaces.
 data/AZKAR-REUSE.txt whitespace=-blank-at-eol
+
+android/gradlew.bat text eol=crlf

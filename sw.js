@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "istiqamah-v2-1-0-release";
+const CACHE = "istiqamah-v2-1-1-android";
 const SHELL = [
   "./",
   "./index.html",
@@ -7,7 +7,12 @@ const SHELL = [
   "./icon.svg",
   "./icon-192.png",
   "./icon-512.png",
-  "./js/boot.js",
+  "./privacy.html",
+  "./js/native-platform.js",
+  "./js/native-model.js",
+  "./js/native.js",
+  "./js/ui/native.js",
+  "./js/boot-2.1.1.js",
   "./js/release.js",
   "./js/migrations.js",
   "./js/adhkar-data.js",

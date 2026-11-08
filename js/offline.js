@@ -1,8 +1,10 @@
-import { t } from "./i18n.js?v=2.1.0";
-import { $, toast } from "./utils.js?v=2.1.0";
-import { session } from "./session.js?v=2.1.0";
+import { isNative } from "./native-platform.js?v=2.1.1";
+import { t } from "./i18n.js?v=2.1.1";
+import { $, toast } from "./utils.js?v=2.1.1";
+import { session } from "./session.js?v=2.1.1";
 
 function updateOfflineStatus() {
+  if(isNative()){const el=$("#offline-status");if(el)el.textContent=t("Android app assets are bundled offline.");return;}
   const el = $("#offline-status");
   if (el)
     el.textContent = t(
@@ -14,7 +16,7 @@ function updateOfflineStatus() {
     );
 }
 async function registerWorker() {
-  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  if (!isNative() && "serviceWorker" in navigator && location.protocol !== "file:") {
     try {
       await window.IstiqamahCheckUpdate?.();
       await navigator.serviceWorker.ready;

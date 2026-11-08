@@ -1,11 +1,11 @@
-import { prayerService } from "../prayer.js?v=2.1.0";
-import { session } from "../session.js?v=2.1.0";
-import { ramadanService as service } from "../ramadan.js?v=2.1.0";
-import { t } from "../i18n.js?v=2.1.0";
-import { esc, $, download, toast } from "../utils.js?v=2.1.0";
-import { modal, render } from "./core.js?v=2.1.0";
-import { today } from "../dates.js?v=2.1.0";
-import { storage } from "../storage.js?v=2.1.0";
+import { prayerService } from "../prayer.js?v=2.1.1";
+import { session } from "../session.js?v=2.1.1";
+import { ramadanService as service } from "../ramadan.js?v=2.1.1";
+import { t } from "../i18n.js?v=2.1.1";
+import { esc, $, download, toast } from "../utils.js?v=2.1.1";
+import { modal, render } from "./core.js?v=2.1.1";
+import { today } from "../dates.js?v=2.1.1";
+import { storage } from "../storage.js?v=2.1.1";
 const notifiedPreparation = new Set();
 const fields = [
   ["fasted", "Fasted"],

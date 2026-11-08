@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),os=require('node:os'),path=require('node:path'),http=require('node:http'),{execFileSync}=require('node:child_process');
 module.exports=async({browser,check})=>{
- for(const [label,commit,schema] of [['A','964ba52',0],['B','fd79768',0],['C','d142ca9',1],['D','4ff5851',2]])
+ for(const [label,commit,schema] of [['A','964ba52',0],['B','fd79768',0],['C','d142ca9',1],['D','4ff5851',2],['E','4941e2b',3]])
  await check(`REAL UPGRADE ${label}: ${commit} app-created records, waiting banner, one tap, exact bytes, offline`,async()=>{
   const dir=fs.mkdtempSync(path.join(os.tmpdir(),'istiqamah-release-'));
   const tar=path.join(dir,'old.tar');execFileSync('git',['archive','--output='+tar,commit]);execFileSync('tar',['-xf',tar,'-C',dir]);
@@ -16,6 +16,7 @@ module.exports=async({browser,check})=>{
   const context=await browser.newContext({timezoneId:'Asia/Dubai',viewport:{width:390,height:844}}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
    await page.clock.install({time:new Date('2027-02-09T08:00:00+04:00')});
+   await context.addInitScript(()=>localStorage.setItem('istiqamah.releaseSeen.2.1.0','seen'));
    await page.goto(base);await page.waitForFunction(()=>!!window.Istiqamah);
    await page.locator('[data-draft="name"]').fill('Upgrade '+label);
    await page.locator('[data-draft="city"]').fill('Dubai');await page.locator('[data-draft="city"]').blur();
@@ -31,7 +32,8 @@ module.exports=async({browser,check})=>{
     d.kids['upgrade-child']={Prayer:true};
     a.getDay(a.offsetDay(key,-1)).journal.well='Yesterday stays unchanged';
     s.tasbih.count=27;s.profile.language=['C','D'].includes(label)?'ar':'en';s.settings.theme=['B','D'].includes(label)?'dark':'light';
-    if(s.phase2){
+    if(s.schemaVersion===3){const e=a.adhkarLibrary.list('general')[0];s.adhkarPrefs.selected=e.id;s.adhkarPrefs.favorites=[e.id];a.adhkarLibrary.set(e,7,key);a.ramadanService.mode('on');a.ramadanService.update('pages',6);a.ramadanService.update('notFasting',true);}
+    else if(s.phase2){
       const e=a.adhkarLibrary.list('general')[0];s.tasbih.selected=e.id;s.phase2.adhkar.favorites=[e.id];
       a.adhkarLibrary.set(e,7,key);
       s.phase2.ramadan.startDate='2027-02-08';s.phase2.ramadan.quran={enabled:true,pages:100,deadline:'2027-03-01',setOn:key};
@@ -48,8 +50,8 @@ module.exports=async({browser,check})=>{
    // Legacy apps cannot learn new UI while already loaded. Their next online navigation loads the independent bridge.
    await page.reload();await page.locator('#app-update:not([hidden])').waitFor({timeout:30000});
    assert.equal(await page.evaluate(()=>localStorage.getItem('istiqamah.v1')),before);
-   fs.mkdirSync(path.resolve(__dirname,'../docs/screenshots/release-2.1.0'),{recursive:true});
-   await page.screenshot({path:path.resolve(__dirname,`../docs/screenshots/release-2.1.0/update-${['C','D'].includes(label)?'ar':'en'}-${['B','D'].includes(label)?'dark':'light'}.png`)});
+   fs.mkdirSync(path.resolve(__dirname,'../docs/screenshots/android-2.1.1'),{recursive:true});
+   await page.screenshot({path:path.resolve(__dirname,`../docs/screenshots/android-2.1.1/update-${['C','D'].includes(label)?'ar':'en'}-${['B','D'].includes(label)?'dark':'light'}.png`)});
    let navigations=0;page.on('framenavigated',frame=>{if(frame===page.mainFrame())navigations++;});
    await page.locator('#app-update button').click();await page.waitForFunction(()=>window.Istiqamah?.state.schemaVersion===3);
    assert.equal(navigations,1);
@@ -59,7 +61,7 @@ module.exports=async({browser,check})=>{
    assert.equal(await page.evaluate(()=>Istiqamah.validate(Istiqamah.state)),true);
    const id=after.adhkarPrefs.selected;
    if(label==='B'){assert(after.adhkarPrefs.favorites.includes(id));assert.equal(after.days[Object.keys(old.days).sort().at(-1)].adhkarCounts[id],7);assert.equal(after.ramadanConfig.completion.pages,100);assert(Object.values(after.days).some(d=>d.ramadanV3?.paused));}
-   await page.waitForFunction(async()=>!(await caches.keys()).some(k=>k!=='istiqamah-v2-1-0-release'&&k.startsWith('istiqamah-')));
+   await page.waitForFunction(async()=>!(await caches.keys()).some(k=>k!=='istiqamah-v2-1-1-android'&&k.startsWith('istiqamah-')));
    await context.setOffline(true);await page.reload();await page.waitForFunction(()=>window.Istiqamah?.state.schemaVersion===3&&SOURCE_DATA.adhkar.length===50);
    assert.equal(await page.evaluate(()=>Istiqamah.state.profile.name),'Upgrade '+label);
    assert.deepEqual(errors,[]);

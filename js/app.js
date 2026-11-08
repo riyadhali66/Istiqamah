@@ -1,6 +1,6 @@
-import { releaseNotes } from "./release.js?v=2.1.0";
-import { adhkarLibrary } from "./adhkar-library.js?v=2.1.0";
-import { ramadanService } from "./ramadan.js?v=2.1.0";
+import { releaseNotes } from "./release.js?v=2.1.1";
+import { adhkarLibrary } from "./adhkar-library.js?v=2.1.1";
+import { ramadanService } from "./ramadan.js?v=2.1.1";
 import {
   maybeRamadanSetup,
   skipRamadanSetup,
@@ -9,8 +9,8 @@ import {
   ramadanTick,
   printRamadan,
   shareEid,
-} from "./ui/ramadan.js?v=2.1.0";
-import { session } from "./session.js?v=2.1.0";
+} from "./ui/ramadan.js?v=2.1.1";
+import { session } from "./session.js?v=2.1.1";
 import {
   addWizardDebt,
   finishPlan,
@@ -19,8 +19,8 @@ import {
   showWizard,
   updateProfile,
   validateDraft,
-} from "./ui/onboarding.js?v=2.1.0";
-import { modal, render } from "./ui/core.js?v=2.1.0";
+} from "./ui/onboarding.js?v=2.1.1";
+import { modal, render } from "./ui/core.js?v=2.1.1";
 import {
   categoryScore,
   dayHabits,
@@ -31,35 +31,35 @@ import {
   score,
   streak,
   syncTodayHabits,
-} from "./records.js?v=2.1.0";
-import { $, $$, toast, uid } from "./utils.js?v=2.1.0";
-import { adhkarService, tasbihSelection } from "./adhkar.js?v=2.1.0";
-import { offsetDay, today } from "./dates.js?v=2.1.0";
-import { engine } from "./engine.js?v=2.1.0";
+} from "./records.js?v=2.1.1";
+import { $, $$, toast, uid } from "./utils.js?v=2.1.1";
+import { adhkarService, tasbihSelection } from "./adhkar.js?v=2.1.1";
+import { offsetDay, today } from "./dates.js?v=2.1.1";
+import { engine } from "./engine.js?v=2.1.1";
 import {
   currentSchedule,
   exportCalendar,
   printTracker,
   showSchedule,
   zonedDate,
-} from "./schedule.js?v=2.1.0";
-import { storage, validate } from "./storage.js?v=2.1.0";
-import { t, loadTranslations } from "./i18n.js?v=2.1.0";
-import { loadInitialContent, loadHadith } from "./content.js?v=2.1.0";
-import { quranService } from "./quran.js?v=2.1.0";
+} from "./schedule.js?v=2.1.1";
+import { storage, validate } from "./storage.js?v=2.1.1";
+import { t, loadTranslations } from "./i18n.js?v=2.1.1";
+import { loadInitialContent, loadHadith } from "./content.js?v=2.1.1";
+import { quranService } from "./quran.js?v=2.1.1";
 import {
   notifications,
   playAdhan,
   playAudio,
   pomodoro,
   tickTimer,
-} from "./reminders.js?v=2.1.0";
-import { defaults, fresh, timezone } from "./config.js?v=2.1.0";
-import { registerWorker } from "./offline.js?v=2.1.0";
-import { prayerService } from "./prayer.js?v=2.1.0";
-import { hijriService } from "./hijri.js?v=2.1.0";
-import { hadithService } from "./hadith.js?v=2.1.0";
-import { ui } from "./ui/views.js?v=2.1.0";
+} from "./reminders.js?v=2.1.1";
+import { defaults, fresh, timezone } from "./config.js?v=2.1.1";
+import { registerWorker } from "./offline.js?v=2.1.1";
+import { prayerService } from "./prayer.js?v=2.1.1";
+import { hijriService } from "./hijri.js?v=2.1.1";
+import { hadithService } from "./hadith.js?v=2.1.1";
+import { ui } from "./ui/views.js?v=2.1.1";
 
 ("use strict");
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -363,22 +363,22 @@ document.addEventListener("click", async (e) => {
       printTracker();
       break;
     case "encrypted-backup":
-      (await import("./ui/backups.js?v=2.1.0")).showEncryptedExport();
+      (await import("./ui/backups.js?v=2.1.1")).showEncryptedExport();
       break;
     case "restore-days":
-      await (await import("./ui/backups.js?v=2.1.0")).showRestoreDays();
+      await (await import("./ui/backups.js?v=2.1.1")).showRestoreDays();
       break;
     case "choose-snapshot":
-      (await import("./ui/backups.js?v=2.1.0")).chooseSnapshot(Number(id));
+      (await import("./ui/backups.js?v=2.1.1")).chooseSnapshot(Number(id));
       break;
     case "export-original":
       storage.exportOriginal();
       break;
     case "download-optional":
-      await (await import("./ui/downloads.js?v=2.1.0")).installOptional(id, el);
+      await (await import("./ui/downloads.js?v=2.1.1")).installOptional(id, el);
       break;
     case "remove-optional":
-      await (await import("./ui/downloads.js?v=2.1.0")).deleteOptional();
+      await (await import("./ui/downloads.js?v=2.1.1")).deleteOptional();
       break;
     case "backup":
       storage.export();
@@ -663,7 +663,7 @@ document.addEventListener("change", async (e) => {
       break;
     case "import-file":
       await (
-        await import("./ui/backups.js?v=2.1.0")
+        await import("./ui/backups.js?v=2.1.1")
       ).handleBackupFile(el.files[0]);
       el.value = "";
       break;
@@ -789,7 +789,7 @@ window.addEventListener("storage", (e) => {
 session.lang = "en";
 session.storageError = false;
 session.state = await storage.load();
-import("./optional-content.js?v=2.1.0").then(m=>m.loadOptionalFont()).catch(()=>{});
+import("./optional-content.js?v=2.1.1").then(m=>m.loadOptionalFont()).catch(()=>{});
 session.lang = ["en", "ar", "ur", "ml", "hi"].includes(
   session.state.profile.language,
 )
@@ -836,6 +836,7 @@ loadInitialContent()
   .catch(() => toast("Readings could not be loaded. Your records are safe."));
 setInterval(() => {
   releaseNotes();
+  if(window.Capacitor?.isNativePlatform?.())import("./native.js?v=2.1.1").then(m=>m.rescheduleNative()).catch(()=>{});
   prayerService.tick();
   ramadanTick();
   tickTimer();
@@ -876,3 +877,5 @@ window.Istiqamah = {
   validate,
   render,
 };
+
+if(window.Capacitor?.isNativePlatform?.())import("./native.js?v=2.1.1").then(m=>m.initializeNative()).catch(()=>toast("Android integration could not start. Your records remain on this device."));

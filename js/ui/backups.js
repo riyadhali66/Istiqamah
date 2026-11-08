@@ -1,11 +1,11 @@
-import { session } from "../session.js?v=2.1.0";
-import { storage, migrate, validate } from "../storage.js?v=2.1.0";
-import { snapshots } from "../snapshots.js?v=2.1.0";
-import { encryptBackup, decryptBackup, isEncrypted } from "../backup-crypto.js?v=2.1.0";
-import { $, esc, download, toast } from "../utils.js?v=2.1.0";
-import { modal, render } from "./core.js?v=2.1.0";
-import { t, loadTranslations } from "../i18n.js?v=2.1.0";
-import { today } from "../dates.js?v=2.1.0";
+import { session } from "../session.js?v=2.1.1";
+import { storage, migrate, validate } from "../storage.js?v=2.1.1";
+import { snapshots } from "../snapshots.js?v=2.1.1";
+import { encryptBackup, decryptBackup, isEncrypted } from "../backup-crypto.js?v=2.1.1";
+import { $, esc, download, toast } from "../utils.js?v=2.1.1";
+import { modal, render } from "./core.js?v=2.1.1";
+import { t, loadTranslations } from "../i18n.js?v=2.1.1";
+import { today } from "../dates.js?v=2.1.1";
 let pending, pendingBytes, pendingEnvelopeBytes, encryptedBytes, encryptedFile, choices = [];
 export function backupControls() {
   return `<button class="btn secondary" data-action="encrypted-backup">${t("Export encrypted backup")}</button>

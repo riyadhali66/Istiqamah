@@ -1,4 +1,4 @@
-import { ramadanHome } from "./ramadan.js?v=2.1.0";
+import { ramadanHome } from "./ramadan.js?v=2.1.1";
 import {
   dayHabits,
   getDay,
@@ -6,20 +6,20 @@ import {
   isPaused,
   score,
   streak,
-} from "../records.js?v=2.1.0";
-import { session } from "../session.js?v=2.1.0";
-import { prayerService } from "../prayer.js?v=2.1.0";
-import { quranService } from "../quran.js?v=2.1.0";
-import { hadithService } from "../hadith.js?v=2.1.0";
-import { contentService } from "../content.js?v=2.1.0";
-import { engine } from "../engine.js?v=2.1.0";
-import { t } from "../i18n.js?v=2.1.0";
-import { esc, icon } from "../utils.js?v=2.1.0";
-import { today } from "../dates.js?v=2.1.0";
-import { hijriService } from "../hijri.js?v=2.1.0";
-import { CATEGORIES } from "../config.js?v=2.1.0";
-import { currentSchedule } from "../schedule.js?v=2.1.0";
-import { pomodoro, timerText } from "../reminders.js?v=2.1.0";
+} from "../records.js?v=2.1.1";
+import { session } from "../session.js?v=2.1.1";
+import { prayerService } from "../prayer.js?v=2.1.1";
+import { quranService } from "../quran.js?v=2.1.1";
+import { hadithService } from "../hadith.js?v=2.1.1";
+import { contentService } from "../content.js?v=2.1.1";
+import { engine } from "../engine.js?v=2.1.1";
+import { t } from "../i18n.js?v=2.1.1";
+import { esc, icon } from "../utils.js?v=2.1.1";
+import { today } from "../dates.js?v=2.1.1";
+import { hijriService } from "../hijri.js?v=2.1.1";
+import { CATEGORIES } from "../config.js?v=2.1.1";
+import { currentSchedule } from "../schedule.js?v=2.1.1";
+import { pomodoro, timerText } from "../reminders.js?v=2.1.1";
 
 function view_today() {
   const d = getDay(),

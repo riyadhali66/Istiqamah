@@ -47,7 +47,7 @@ module.exports = async function ({ browser, base, check, seed }) {
       for (const key of Object.keys(legacy))
         assert.deepEqual(result.state[key], legacy[key]);
       const migrated = await page.evaluate(async () => {
-        const { migrate } = await import("./js/storage.js?v=2.1.0");
+        const { migrate } = await import("./js/storage.js?v=2.1.1");
         const first = migrate(Istiqamah.state);
         return JSON.stringify(first) === JSON.stringify(migrate(first));
       });
@@ -115,10 +115,10 @@ module.exports = async function ({ browser, base, check, seed }) {
         other = await context.newPage();
       await other.goto(base);
       await other.waitForFunction(() => !!window.Istiqamah);
-      await other.evaluate(() => {
+      assert.equal(await other.evaluate(() => {
         Istiqamah.state.profile.name = "Latest tab";
-        Istiqamah.storage.save();
-      });
+        return Istiqamah.storage.save();
+      }), true, "The newer tab must successfully save before testing stale rejection");
       assert.equal(
         await page.evaluate(() => {
           Istiqamah.state.profile.name = "Stale tab";
@@ -159,7 +159,7 @@ module.exports = async function ({ browser, base, check, seed }) {
       assert(!text.includes("profile"));
       const result = await page.evaluate(async (env) => {
         const { decryptBackup, encryptBackup } =
-          await import("./js/backup-crypto.js?v=2.1.0");
+          await import("./js/backup-crypto.js?v=2.1.1");
         let wrong = false,
           tampered = false,
           bounds = false;
@@ -233,7 +233,7 @@ module.exports = async function ({ browser, base, check, seed }) {
     async () => {
       const { context, page } = await open(legacy);
       await page.evaluate(async () => {
-        const { snapshots } = await import("./js/snapshots.js?v=2.1.0");
+        const { snapshots } = await import("./js/snapshots.js?v=2.1.1");
         await Istiqamah.storage.snapshot();
         for (let i = 9; i >= 1; i--) {
           const date = Istiqamah.offsetDay(Istiqamah.today(), -i),
@@ -276,7 +276,7 @@ module.exports = async function ({ browser, base, check, seed }) {
     async () => {
       const { context, page } = await open(legacy);
       const result = await page.evaluate(async () => {
-        const { snapshots } = await import("./js/snapshots.js?v=2.1.0");
+        const { snapshots } = await import("./js/snapshots.js?v=2.1.1");
         const old = snapshots.checkpoint;
         snapshots.checkpoint = async () => {
           throw Error("quota");

@@ -30,3 +30,11 @@ English translations accompany Seen entries only when provided by that source. A
 ## Optional content and privacy
 
 Pinned optional source URLs and SHA-256 values live in `js/optional-content.js`. Downloads occur only after an explicit tap, are verified before storage in local IndexedDB, work offline afterwards, and are removable. Old sound selections never trigger a download. Providers receive ordinary request metadata, including network address; personal records are never transmitted. No unlicensed MP3 or Uthmani font is distributed. The bundled Amiri font remains the Arabic fallback.
+
+## Android wrapper — 2.1.1
+
+[Capacitor](https://github.com/ionic-team/capacitor) core/Android **8.6.0** and the [official plugins](https://github.com/ionic-team/capacitor-plugins) App **8.1.2**, Browser **8.0.5**, Filesystem **8.1.5**, Local Notifications **8.3.1**, Share **8.0.3**, Splash Screen **8.0.2**, Status Bar **8.0.4** use the **MIT license**. Exact notices for every distributed package are retained in `vendor/LICENSE-capacitor.txt`. `package-lock.json` pins their npm integrity hashes. The native-only JS bridge is bundled by esbuild from these packages; it is generated into `www/js/native-plugins.js`, not requested by the web app. Native Android dependencies retain their own licenses: AndroidX/Google Maven libraries, Kotlin and Apache Cordova Android are Apache-2.0; their pinned Maven dependencies are resolved by Gradle. Gradle's wrapper is Apache-2.0. No SDK, JDK or signing key is distributed in the repository.
+
+The adaptive icon and splash are derived from this project's MIT `icon.svg`; no new external artwork or religious content is introduced. System-default notification sound is used. Optional recordings with unresolved rights are never attached to native notifications or bundled. The original religious-source register and limitations above remain unchanged.
+
+Runtime transitive packages: Capacitor Synapse **1.0.4** (MIT) and [tslib **2.9.1**](https://github.com/microsoft/tslib) (BSD Zero Clause / 0BSD). Their exact notices are also retained in `vendor/LICENSE-capacitor.txt`.

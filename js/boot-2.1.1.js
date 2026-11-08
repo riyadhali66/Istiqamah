@@ -1,6 +1,6 @@
 /* Independent recovery and update bridge: deliberately has no app-module imports. */
 (() => {
-  const version='2.1.0',key='istiqamah.v1';
+  const version='2.1.1',key='istiqamah.v1';
   const recovery=document.querySelector('#boot-recovery'),banner=document.querySelector('#app-update');
   const messages={en:['A new version of Istiqamah is ready — Update now','Update now'],ar:['إصدار جديد من استقامة جاهز — حدّث الآن','حدّث الآن'],ur:['استقامہ کا نیا ورژن تیار ہے — ابھی اپ ڈیٹ کریں','ابھی اپ ڈیٹ کریں'],ml:['ഇസ്തിഖാമയുടെ പുതിയ പതിപ്പ് തയ്യാറാണ് — ഇപ്പോൾ പുതുക്കുക','ഇപ്പോൾ പുതുക്കുക'],hi:['इस्तिक़ामह का नया संस्करण तैयार है — अभी अपडेट करें','अभी अपडेट करें']};
   let lang='en';try{const saved=JSON.parse(localStorage.getItem(key));lang=saved?.profile?.language||'en';document.documentElement.dataset.theme=saved?.settings?.theme==='dark'?'dark':'light';}catch{}
@@ -8,7 +8,7 @@
   const wait={en:'Keep this page open while the update is cached. Your saved records are unchanged.',ar:'أبقِ هذه الصفحة مفتوحة أثناء حفظ التحديث. سجلاتك المحفوظة لم تتغير.',ur:'اپ ڈیٹ محفوظ ہونے تک صفحہ کھلا رکھیں۔ آپ کے ریکارڈ تبدیل نہیں ہوئے۔',ml:'പുതുക്കൽ സൂക്ഷിക്കുന്നതുവരെ ഈ പേജ് തുറന്നുവയ്ക്കുക. നിങ്ങളുടെ രേഖകൾ മാറിയിട്ടില്ല.',hi:'अपडेट सहेजने तक यह पेज खुला रखें। आपके रिकॉर्ड बदले नहीं हैं।'};
   document.querySelector('#boot-wait-text').textContent=wait[lang]||wait.en;
   const words=messages[lang]||messages.en;banner.querySelector('span').textContent=words[0];banner.querySelector('button').textContent=words[1];banner.dir=['ar','ur'].includes(lang)?'rtl':'ltr';
-  const exportRaw=()=>{const raw={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);raw[k]=localStorage.getItem(k);}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(raw,null,2)],{type:'application/json'}));a.download='istiqamah-raw-localStorage.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+  const exportRaw=()=>{const raw={};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);raw[k]=localStorage.getItem(k);}if(window.Capacitor?.isNativePlatform?.()){window.IstiqamahExportText('istiqamah-raw-localStorage.json',JSON.stringify(raw,null,2)).catch(()=>{document.querySelector('#boot-error').textContent='Could not share backup. Check available storage.';});return;}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(raw,null,2)],{type:'application/json'}));a.download='istiqamah-raw-localStorage.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
   document.querySelector('#boot-export').onclick=exportRaw;
   document.querySelector('#boot-restore').onclick=async()=>{
     try {
@@ -42,8 +42,10 @@
   });
   window.IstiqamahCheckUpdate=async()=>{if(reg){await reg.update();showUpdate(reg);}};
   async function start(){
+    const native=!!window.Capacitor?.isNativePlatform?.();
+    if(native){try{await import('./native-plugins.js');window.IstiqamahExportText=async(name,text)=>(await import('./native-platform.js?v=2.1.1')).shareBackup(name,text);}catch(e){recovery.hidden=false;document.querySelector('#boot-error').textContent='Android plugins could not load. Your records are unchanged.';return;}}
     let old=false;
-    if('serviceWorker' in navigator && location.protocol!=='file:'){
+    if(!native && 'serviceWorker' in navigator && location.protocol!=='file:'){
       old=!!navigator.serviceWorker.controller&&!navigator.serviceWorker.controller.scriptURL.includes('v='+version);
       try{
         reg=await navigator.serviceWorker.register('./sw.js?v='+version,{updateViaCache:'none'});
@@ -52,7 +54,7 @@
       }catch(e){if(old){recovery.hidden=false;document.querySelector('#boot-error').textContent='Update could not be cached. Reconnect and reload; your data is unchanged.';return;}}
     }
     if(old){document.documentElement.dataset.bootWait='true';document.querySelector('#boot-wait').hidden=false;return;}
-    try{await import('./app.js?v=2.1.0');recovery.hidden=true;}
+    try{await import('./app.js?v=2.1.1');recovery.hidden=true;}
     catch(e){recovery.hidden=false;document.querySelector('#boot-error').textContent='The app could not start. Your saved records remain on this device. '+e.message;}
   }
   start();

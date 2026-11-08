@@ -1,9 +1,9 @@
-import { session } from "./session.js?v=2.1.0";
-import { today, offsetDay } from "./dates.js?v=2.1.0";
-import { hijriService } from "./hijri.js?v=2.1.0";
-import { prayerService } from "./prayer.js?v=2.1.0";
-import { storage } from "./storage.js?v=2.1.0";
-import { getDay } from "./records.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.1";
+import { today, offsetDay } from "./dates.js?v=2.1.1";
+import { hijriService } from "./hijri.js?v=2.1.1";
+import { prayerService } from "./prayer.js?v=2.1.1";
+import { storage } from "./storage.js?v=2.1.1";
+import { getDay } from "./records.js?v=2.1.1";
 const span = (a, b) =>
   Math.round(
     (Date.parse(a + "T12:00:00Z") - Date.parse(b + "T12:00:00Z")) / 86400000,

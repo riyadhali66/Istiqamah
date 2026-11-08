@@ -27,7 +27,7 @@ let browser;
     args: ["--no-sandbox"],
   });
   const context = await browser.newContext();
-  await context.addInitScript(()=>localStorage.setItem("istiqamah.releaseSeen.2.1.0","seen"));
+  await context.addInitScript(()=>localStorage.setItem("istiqamah.releaseSeen.2.1.1","seen"));
   const
     page = await context.newPage(),
     errors = [];
@@ -39,7 +39,7 @@ let browser;
   await page.locator('[data-action="nav"][data-id="settings"]').first().click();
   const sources = await page.evaluate(
     async () =>
-      (await import("./js/optional-content.js?v=2.1.0")).OPTIONAL_SOURCES,
+      (await import("./js/optional-content.js?v=2.1.1")).OPTIONAL_SOURCES,
   );
   assert.equal(await page.evaluate(() => SOURCE_DATA.adhkar.length), 50);
   await page.route(sources.makkah.url, (route) =>
@@ -84,7 +84,7 @@ let browser;
         async (id) =>
           (
             await (
-              await import("./js/optional-content.js?v=2.1.0")
+              await import("./js/optional-content.js?v=2.1.1")
             ).readOptional(id)
           ).size,
         id,
@@ -122,7 +122,7 @@ let browser;
     2,
   );
   const audio = await page.evaluate(async () => {
-    const m = await import("./js/optional-content.js?v=2.1.0");
+    const m = await import("./js/optional-content.js?v=2.1.1");
     const url = await m.optionalAudio("makkah");
     return (await (await fetch(url)).arrayBuffer()).byteLength;
   });
@@ -137,14 +137,14 @@ let browser;
   await page.waitForFunction(
     async () =>
       !(await (
-        await import("./js/optional-content.js?v=2.1.0")
+        await import("./js/optional-content.js?v=2.1.1")
       ).readOptional("makkah")),
   );
   assert.equal(
     await page.evaluate(
       async () =>
         !!(await (
-          await import("./js/optional-content.js?v=2.1.0")
+          await import("./js/optional-content.js?v=2.1.1")
         ).readOptional("makkah")),
     ),
     false,

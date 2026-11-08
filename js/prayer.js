@@ -1,9 +1,9 @@
-import { session } from "./session.js?v=2.1.0";
-import { dateObj, offsetDay, today } from "./dates.js?v=2.1.0";
-import { timezone } from "./config.js?v=2.1.0";
-import { $, toast } from "./utils.js?v=2.1.0";
-import { t } from "./i18n.js?v=2.1.0";
-import { playAdhan } from "./reminders.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.1";
+import { dateObj, offsetDay, today } from "./dates.js?v=2.1.1";
+import { timezone } from "./config.js?v=2.1.1";
+import { $, toast } from "./utils.js?v=2.1.1";
+import { t } from "./i18n.js?v=2.1.1";
+import { playAdhan } from "./reminders.js?v=2.1.1";
 
 const prayerService = {
   calculate(key) {

@@ -1,8 +1,8 @@
-import { dateObj, offsetDay, today } from "../dates.js?v=2.1.0";
-import { hijriService } from "../hijri.js?v=2.1.0";
-import { monthKeys } from "../records.js?v=2.1.0";
-import { session } from "../session.js?v=2.1.0";
-import { t } from "../i18n.js?v=2.1.0";
+import { dateObj, offsetDay, today } from "../dates.js?v=2.1.1";
+import { hijriService } from "../hijri.js?v=2.1.1";
+import { monthKeys } from "../records.js?v=2.1.1";
+import { session } from "../session.js?v=2.1.1";
+import { t } from "../i18n.js?v=2.1.1";
 
 function view_fasting() {
   let tomorrow = offsetDay(today(), 1),

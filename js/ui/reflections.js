@@ -1,9 +1,9 @@
-import { earlierProgress } from "./tasbih.js?v=2.1.0";
-import { t } from "../i18n.js?v=2.1.0";
-import { session } from "../session.js?v=2.1.0";
-import { adhkarService } from "../adhkar.js?v=2.1.0";
-import { getDay } from "../records.js?v=2.1.0";
-import { esc, icon } from "../utils.js?v=2.1.0";
+import { earlierProgress } from "./tasbih.js?v=2.1.1";
+import { t } from "../i18n.js?v=2.1.1";
+import { session } from "../session.js?v=2.1.1";
+import { adhkarService } from "../adhkar.js?v=2.1.1";
+import { getDay } from "../records.js?v=2.1.1";
+import { esc, icon } from "../utils.js?v=2.1.1";
 
 function view_reflections() {
   const earlier = earlierProgress(session.selectedDate);
