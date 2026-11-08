@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.1.0 — Unified safe release
+
+- Combine PR #3 modular Phase 1/Ramadan work with the wider permitted adhkar categories from main. Version 2.0.0 was the interim live single-file Phase 2 build (`fd79768`); it was not the modular release.
+- Use schema 3 for all A/B/C/D source versions, exact original-byte checkpoints before migration, immutable historical fields, explicit stable-ID mappings, unmatched-progress visibility and fail-closed saves.
+- Preserve encrypted backups, seven daily copies, ordinary habits, and local/offline privacy. Keep unlicensed recordings and Uthmani outside the bundle, with explicit optional credited downloads.
+- Add controlled one-tap worker updates, once-only release notes in five languages, footer/About version and independent startup recovery.
+- Retain one Ramadan implementation with equivalent legacy settings, optional completion dates, paused tracking, preparation reminders/calendar instants, and explicit make-up tracking.
+- Test actual app/worker upgrades from all four commits, mobile RTL and both themes, licensed sources, optional assets and corrupted-module recovery.
+
 ## 1.2.0 — Phase 2
 
 - Restore morning/evening adhkar as a bundled MIT-licensed core feature with licensed English, preserved old keys, reviewed source aliases and earlier-counter visibility.
@@ -22,9 +31,9 @@
 
 This foundation preceded the 1.2.0 Ramadan release. Deeper faith, motivation/growth and cloud features remain subsequent phases.
 
-## 2.0.0 — planned
+## 2.0.0 — Interim live Phase 2 (`fd79768`)
 
-Phase 5 is not implemented or enabled in this prerelease. No account, cloud sync, push service or Sunnah.com server is present. This entry reserves the requested major-version boundary rather than claiming shipped functionality.
+The single-file main received Ramadan Mode and the 113-entry Azkar library before the modular PRs were combined. Release 2.1.0 unifies those lines. No login, cloud sync, backend, analytics, AI API or Sunnah.com server is enabled.
 
 ## 1.0.0
 

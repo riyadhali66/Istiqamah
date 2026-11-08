@@ -1,17 +1,17 @@
-import { session } from "../session.js?v=1.2.0";
-import { t } from "../i18n.js?v=1.2.0";
-import { $, $$, esc, icon, money, toast, uid } from "../utils.js?v=1.2.0";
-import { linkLabels, locationFields, options, render } from "./core.js?v=1.2.0";
+import { session } from "../session.js?v=2.1.0";
+import { t } from "../i18n.js?v=2.1.0";
+import { $, $$, esc, icon, money, toast, uid } from "../utils.js?v=2.1.0";
+import { linkLabels, locationFields, options, render } from "./core.js?v=2.1.0";
 import {
   CATEGORIES,
   CITY,
   METHODS,
   STRUGGLES,
   timezone,
-} from "../config.js?v=1.2.0";
-import { today } from "../dates.js?v=1.2.0";
-import { engine } from "../engine.js?v=1.2.0";
-import { save } from "../records.js?v=1.2.0";
+} from "../config.js?v=2.1.0";
+import { today } from "../dates.js?v=2.1.0";
+import { engine } from "../engine.js?v=2.1.0";
+import { save } from "../records.js?v=2.1.0";
 
 const wizardTitles = [
   "About you",

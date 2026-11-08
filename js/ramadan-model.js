@@ -1,7 +1,9 @@
 export const ramadanDefaults = () => ({
   mode: "auto",
+  dailyTargetEnabled:false, dailyPages:2, suhoorMinutes:45, iftarMinutes:30, completion:{enabled:false,pages:0,deadline:"",setOn:""},
+  goals:{taraweeh:true,charity:true,adhkar:true,family:true}, nightGoals:"",
   adjustment: 0,
-  manualStart: "",
+  manualStart: "", manualLength:30,
   manualEnd: "",
   goal: 1,
   taraweeh: "home",
@@ -31,6 +33,7 @@ export function validRamadan(value, day = false) {
       value.day >= 1 &&
       value.day <= 30 &&
       [
+        "paused", "charity", "adhkar", "family", "makeUpNeeded",
         "fasted",
         "notFasting",
         "suhoor",
@@ -41,7 +44,8 @@ export function validRamadan(value, day = false) {
         "itikaf",
       ].every((k) => value[k] == null || typeof value[k] === "boolean") &&
       ["pages", "sadaqah"].every((k) => value[k] == null || number(value[k])) &&
-      !(value.fasted && value.notFasting)
+      !(value.fasted && value.notFasting) &&
+      (value.reason == null || typeof value.reason === "string" && value.reason.length<=1000)
     );
   return (
     ["auto", "on", "off"].includes(value.mode) &&
@@ -57,6 +61,12 @@ export function validRamadan(value, day = false) {
     Number.isInteger(value.fitrPeople) &&
     value.fitrPeople >= 1 &&
     value.fitrPeople <= 100 &&
-    Number.isInteger(value.setupYear)
+    Number.isInteger(value.setupYear) &&
+    (value.manualLength == null || [29,30].includes(value.manualLength)) &&
+    ["suhoorMinutes","iftarMinutes"].every(k=>value[k]==null || number(value[k],180)) &&
+    (value.dailyTargetEnabled==null || typeof value.dailyTargetEnabled==='boolean') &&
+    (value.dailyPages==null || number(value.dailyPages,1e6)) &&
+    (value.nightGoals==null || typeof value.nightGoals==='string' && value.nightGoals.length<=1000) &&
+    (value.completion==null || obj(value.completion) && typeof value.completion.enabled==='boolean' && number(value.completion.pages,1e6) && date(value.completion.deadline) && date(value.completion.setOn))
   );
 }

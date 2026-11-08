@@ -8,11 +8,17 @@
       name="description"
       content="A private, prayer-anchored companion for small, consistent steps in every part of life."
     />
-    <link rel="preload" href="vendor/adhan.js?v=1.2.0" as="script" />
-    <link rel="preload" href="vendor/arabic-core.js?v=1.2.0" as="script" />
+    <link rel="preload" href="vendor/adhan.js?v=2.1.0" as="script" />
+    <link rel="preload" href="vendor/arabic-core.js?v=2.1.0" as="script" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon-192.png" />
+    <style>
+      #app-update{position:fixed;inset:0 0 auto;z-index:100;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;padding:16px;background:var(--card,#fff);color:var(--ink,#213c35);border-bottom:2px solid #926b28;box-shadow:0 5px 24px #203f3010}
+      #boot-wait{max-width:680px;margin:140px auto 24px;padding:28px;background:var(--card,#fff);color:var(--ink,#213c35);border-radius:16px;border:1px solid var(--line,#e5eae3)}
+      html[data-boot-wait] #sidebar,html[data-boot-wait] #main{display:none}
+      @media(max-width:700px){#boot-wait{margin:180px 16px 24px}}
+    </style>
     <title>Istiqamah — Small deeds. Every day.</title>
     <link
       rel="preload"
@@ -21,35 +27,35 @@
       type="font/woff2"
       crossorigin
     />
-    <link rel="modulepreload" href="js/app.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/storage.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/i18n.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/config.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/ui/core.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/ui/onboarding.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/dates.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/records.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/session.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/utils.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/engine.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/prayer.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/hijri.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/content.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/quran.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/hadith.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/adhkar.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/schedule.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/reminders.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/offline.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/snapshots.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/ui/views.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/ui/today.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/ui/shell.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/ui/top.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/ui/heading.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/ui/footer.js?v=1.2.0" />
-    <link rel="modulepreload" href="js/ui/charts.js?v=1.2.0" />
-    <link rel="stylesheet" href="css/app.css?v=1.2.0" />
+    <link rel="modulepreload" href="js/app.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/storage.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/i18n.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/config.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/ui/core.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/ui/onboarding.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/dates.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/records.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/session.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/utils.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/engine.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/prayer.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/hijri.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/content.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/quran.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/hadith.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/adhkar.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/schedule.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/reminders.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/offline.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/snapshots.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/ui/views.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/ui/today.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/ui/shell.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/ui/top.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/ui/heading.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/ui/footer.js?v=2.1.0" />
+    <link rel="modulepreload" href="js/ui/charts.js?v=2.1.0" />
+    <link rel="stylesheet" href="css/app.css?v=2.1.0" />
   </head>
   <body>
     <svg aria-hidden="true" style="display: none">
@@ -132,14 +138,17 @@
         </symbol>
       </defs>
     </svg>
+    <section id="app-update" class="release-banner" role="status" hidden><span>A new version of Istiqamah is ready — Update now</span> <button class="btn" type="button">Update now</button></section>
+    <section id="boot-wait" hidden><h1>Istiqamah 2.1.0</h1><p id="boot-wait-text">Keep this page open while the update is cached. Your saved records are unchanged.</p></section>
+    <section id="boot-recovery" class="card" hidden><h1>Istiqamah recovery</h1><p id="boot-error"></p><button id="boot-export" type="button">Download my data backup</button> <button id="boot-restore" type="button">Restore yesterday’s copy</button><p>Export your records first. Restoring keeps an original-bytes backup. No records are sent anywhere.</p></section>
     <aside class="sidebar" id="sidebar"></aside>
     <main id="main"></main>
     <dialog id="wizard" aria-labelledby="wizard-title"></dialog>
     <dialog id="modal" aria-labelledby="modal-title"></dialog>
     <div id="print-area" class="print-only"></div>
     <div id="toast" class="toast hide" role="status"></div>
-    <script defer src="vendor/adhan.js?v=1.2.0"></script>
-    <script defer src="vendor/arabic-core.js?v=1.2.0"></script>
-    <script type="module" src="js/app.js?v=1.2.0"></script>
+    <script defer src="vendor/adhan.js?v=2.1.0"></script>
+    <script defer src="vendor/arabic-core.js?v=2.1.0"></script>
+    <script defer src="js/boot.js?v=2.1.0"></script>
   </body>
 </html>

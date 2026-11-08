@@ -1,53 +1,23 @@
-import { adhkarService, tasbihSelection } from "../adhkar.js?v=1.2.0";
-import { getDay } from "../records.js?v=1.2.0";
-import { today } from "../dates.js?v=1.2.0";
-import { session } from "../session.js?v=1.2.0";
-import { t } from "../i18n.js?v=1.2.0";
-import { esc, icon } from "../utils.js?v=1.2.0";
-
+import { adhkarLibrary as library } from '../adhkar-library.js?v=2.1.0';
+import { getDay } from '../records.js?v=2.1.0';
+import { today } from '../dates.js?v=2.1.0';
+import { session } from '../session.js?v=2.1.0';
+import { t } from '../i18n.js?v=2.1.0';
+import { esc } from '../utils.js?v=2.1.0';
+export function earlierProgress(key=today()) {
+ const old=getDay(key).earlierAdhkar || {};
+ return Object.entries(old).some(([,n])=>n>0)?`<details class="card"><summary>${t('Earlier counter progress')}</summary><p>${t('Earlier entries are kept unchanged; some source entries differ.')}</p>${Object.entries(old).filter(([,n])=>n>0).map(([id,n])=>{const e=library.archive[id];return `<article><strong>${esc(id)}: ${n}${(session.state.adhkarPrefs.earlierFavorites || []).includes(id)?" ★":""}</strong>${e?`<p class="quote" lang="ar" dir="rtl">${esc(e.text)}</p><p>${esc(e.reference)} · Azkar DB</p>`:''}</article>`;}).join('')}</details>`:'';
+}
 function view_tasbih() {
-  const selected = tasbihSelection();
-  const count = selected
-    ? getDay(today()).adhkar[selected.key] || 0
-    : session.state.tasbih.count;
-  const legacyKey =
-    !selected &&
-    /^(morning|evening)-\d+$/.test(session.state.tasbih.selected || "")
-      ? session.state.tasbih.selected
-      : null;
-  const goal = selected ? selected.entry.count : session.state.tasbih.goal;
-  const done = !!legacyKey || (selected && count >= goal);
-  return `<section class="card center"><span class="eyebrow">${t("Tasbih")}</span><h2 style="margin-top:12px">${t("One small step, a little closer.")}</h2>
-      <div style="max-width:600px;margin:24px auto 0;text-align:start">${!adhkarService.list("morning").length ? `<p>${t("Download optional adhkar in Settings. Your saved counts are kept.")}</p>` : ""}<label for="tasbih-adhkar">${t("Choose adhkar")}</label>
-      <select id="tasbih-adhkar"><option value="">${t("Free counter")}</option>${legacyKey ? `<option value="${legacyKey}" selected>${t("Earlier counter progress")}: ${getDay(today()).adhkar[legacyKey] || 0}</option>` : ""}${[
-        "morning",
-        "evening",
-      ]
-        .map(
-          (period) =>
-            `<optgroup label="${t(period === "morning" ? "Morning adhkar" : "Evening adhkar")}">${adhkarService
-              .list(period)
-              .map(
-                (a, i) =>
-                  `<option value="${adhkarService.key(period, i)}" ${selected?.key === adhkarService.key(period, i) ? "selected" : ""}>${i + 1}. ${esc(a.text.replace(/\s+/g, " ").slice(0, 85))}${a.text.length > 85 ? "…" : ""} · ${a.count}</option>`,
-              )
-              .join("")}</optgroup>`,
-        )
-        .join("")}</select></div>
-      ${selected ? `<article style="max-width:700px;margin:22px auto;text-align:start"><span class="badge">${t(selected.period === "morning" ? "Morning adhkar" : "Evening adhkar")}</span><p class="quote" lang="ar" dir="rtl" style="white-space:pre-line;overflow-wrap:anywhere;margin-top:18px">${esc(selected.entry.text)}</p><span class="source" lang="ar" dir="rtl">${esc(selected.entry.reference)}</span>${session.lang === "en" && selected.entry.en ? `<p>${esc(selected.entry.en)}</p>` : ""}<small>${t("Arabic source text")} · Seen Arabic · MIT</small></article>` : ""}
-      <button class="tasbih-button" data-action="tasbih" aria-label="${t("Tasbih")}: ${count} / ${goal}" ${done ? "disabled" : ""}>${legacyKey ? getDay(today()).adhkar[legacyKey] || 0 : count}</button><p class="muted">${t("Target")}: ${goal} · ${selected ? `${Math.min(count, goal)} / ${goal} ${t("completed")}` : `${count ? Math.floor(count / goal) : 0} ${t("completed")}`}</p>
-      <div class="row wrap" style="justify-content:center;margin:20px 0">${selected ? `<button class="btn secondary" data-action="tasbih-next">${t("Next dhikr")} ${icon("arrow")}</button>` : `<button class="btn secondary" data-action="tasbih-goal" data-value="33">33</button><button class="btn secondary" data-action="tasbih-goal" data-value="100">100</button>`}<button class="linkbtn" data-action="tasbih-reset">${t("Reset counter")}</button></div>
-      ${
-        selected
-          ? `<p class="subtle">${t("Shared with your daily adhkar checklist.")}</p>`
-          : `<label for="tasbih-link">${t("Linked habit")} · ${t("Optional")}</label><select id="tasbih-link" style="max-width:320px"><option value="">${t("Optional")}</option>${session.state.habits
-              .filter((h) => h.category === "Faith" && !h.prayer)
-              .map(
-                (h) =>
-                  `<option value="${esc(h.id)}" ${session.state.tasbih.link === h.id ? "selected" : ""}>${esc(t(h.label))}</option>`,
-              )
-              .join("")}</select>`
-      }
-      <div class="privacy">${t("Saved on this device")} · ${today()}</div></section>`;
+ const p=session.state.adhkarPrefs,e=library.selected(),unmatched=!!p.selected&&!e,old=unmatched?library.archive[p.selected]:null,list=library.filtered(),n=e?library.count(e):unmatched?(getDay(today()).earlierAdhkar[p.selected] || 0):session.state.tasbih.count,goal=e?library.target(e):unmatched?null:session.state.tasbih.goal;
+ const categories=[...new Map(library.entries.map(a=>[a.category,a.categoryLabel])).entries()];
+ return `<section class="card center"><span class="eyebrow">${t('Tasbih')}</span><h2>${t('One small step, a little closer.')}</h2><div class="adhkar-chooser">
+ <label for="adhkar-search">${t('Search adhkar')}</label><input id="adhkar-search" maxlength="1000" type="search" value="${esc(p.search)}">
+ <label for="adhkar-category">${t('Category')}</label><select id="adhkar-category">${[['all','All adhkar'],['favorites','Favorites'],...categories].map(([id,label])=>`<option value="${id}" ${p.category===id?'selected':''}>${t(label)}</option>`).join('')}</select>
+ <label for="tasbih-adhkar">${t('Choose adhkar')}</label><select id="tasbih-adhkar"><option value="">${t('Free counter')}</option>${unmatched?`<option value="${esc(p.selected)}" selected>${t("Earlier counter progress")}: ${n}</option>`:""}${e&&!list.includes(e)?`<option value="${e.id}" selected>${esc(e.text.slice(0,85))}</option>`:''}${list.map(a=>`<option value="${a.id}" ${e?.id===a.id?'selected':''}>${esc(a.text.slice(0,85))}</option>`).join('')}</select>${!list.length?`<p role="status">${t("No matching adhkar")}</p>`:""}
+ </div>${unmatched?`<article class="adhkar-selected"><h3>${t('Earlier counter progress')}: ${n}</h3><p>${t('Earlier entries are kept unchanged; some source entries differ.')}</p>${old?`<p class="quote" lang="ar" dir="rtl">${esc(old.text)}</p><p>${esc(old.reference)} · Azkar DB</p>`:''}</article>`:''}${e?`<article class="adhkar-selected"><div class="row between wrap"><span class="badge">${t(e.categoryLabel)}</span><button class="btn secondary" data-action="dhikr-favorite" aria-pressed="${p.favorites.includes(e.id)}">${t(p.favorites.includes(e.id)?'Remove favorite':'Add favorite')}</button></div><p class="quote" lang="ar" dir="rtl">${esc(e.text)}</p>${session.lang==='en'&&e.en?`<p>${esc(e.en)}</p>`:''}<p class="source" lang="ar" dir="rtl">${esc(e.reference||t('Reference not supplied by source'))}</p><p class="subtle">${esc(e.provenance.dataset)} · ${e.provenance.dataset==='Seen Arabic'?'MIT':t('Reuse permission in source README')}</p>${!e.count?`<label>${t('Personal counting goal')}<input id="dhikr-personal-target" type="number" min="1" max="10000" value="${goal||''}"></label><p>${t('No prescribed repetition count supplied by source.')}</p>`:''}</article>`:''}
+ <button class="tasbih-button" data-action="tasbih" aria-label="${t('Tasbih')}: ${n}" ${unmatched||e&&goal&&n>=goal?'disabled':''}>${n}</button><p>${goal?`${t(e&&!e.count?'Personal counting goal':'Target')}: ${goal}`:t('No prescribed repetition count supplied by source.')}</p>
+ <div class="row wrap" style="justify-content:center">${e?`<button class="btn secondary" data-action="tasbih-previous">${t('Previous dhikr')}</button><button class="btn secondary" data-action="tasbih-next">${t('Next dhikr')}</button>`:`<button class="btn secondary" data-action="tasbih-goal" data-value="33">33</button><button class="btn secondary" data-action="tasbih-goal" data-value="100">100</button>`}<button class="linkbtn" data-action="tasbih-reset" ${unmatched?'disabled':''}>${t('Reset counter')}</button></div>
+ ${e?`<p>${t('Shared with your daily adhkar checklist.')}</p>`:`<label for="tasbih-link">${t('Linked habit')} · ${t('Optional')}</label><select id="tasbih-link"><option value="">${t('Optional')}</option>${session.state.habits.filter(h=>h.category==='Faith'&&!h.prayer).map(h=>`<option value="${esc(h.id)}" ${session.state.tasbih.link===h.id?'selected':''}>${esc(t(h.label))}</option>`).join('')}</select>`}<p class="privacy">${t('Saved on this device')} · ${today()}</p></section>${earlierProgress()}`;
 }
 export { view_tasbih };

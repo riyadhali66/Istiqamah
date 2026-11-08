@@ -1,4 +1,4 @@
-import { ramadanDefaults } from "./ramadan-model.js?v=1.2.0";
+import { ramadanDefaults } from "./ramadan-model.js?v=2.1.0";
 const CATEGORIES = [
   "Faith",
   "Health & Fitness",
@@ -121,8 +121,9 @@ const defaults = () => ({
 });
 const fresh = () => ({
   version: 1,
-  schemaVersion: 2,
-  ramadan: ramadanDefaults(),
+  schemaVersion: 3,
+  ramadanConfig: ramadanDefaults(),
+  adhkarPrefs: {selected:"",favorites:[],category:"all",search:"",personalTargets:{}},
   onboarded: false,
   profile: defaults(),
   habits: [],

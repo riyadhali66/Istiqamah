@@ -1,17 +1,18 @@
-import { ramadanDefaults, validRamadan } from "./ramadan-model.js?v=1.2.0";
-import { session } from "./session.js?v=1.2.0";
+import { upgradeRecords } from "./migrations.js?v=2.1.0";
+import { ramadanDefaults, validRamadan } from "./ramadan-model.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.0";
 import {
   fresh,
   defaults,
   CATEGORIES,
   STRUGGLES,
   METHODS,
-} from "./config.js?v=1.2.0";
-import { toast, download } from "./utils.js?v=1.2.0";
-import { today } from "./dates.js?v=1.2.0";
-import { snapshots } from "./snapshots.js?v=1.2.0";
+} from "./config.js?v=2.1.0";
+import { toast, download } from "./utils.js?v=2.1.0";
+import { today } from "./dates.js?v=2.1.0";
+import { snapshots } from "./snapshots.js?v=2.1.0";
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 export function hasUnsafeKeys(value) {
   if (!value || typeof value !== "object") return false;
   return Object.keys(value).some(
@@ -24,10 +25,10 @@ export function migrate(value) {
   if (!validate(value)) throw new Error("Invalid saved format");
   const upgraded = {
     ...fresh(),
-    ...structuredClone(value),
+    ...upgradeRecords(value),
     schemaVersion: SCHEMA_VERSION,
   };
-  upgraded.ramadan = { ...ramadanDefaults(), ...upgraded.ramadan };
+  upgraded.ramadanConfig = { ...ramadanDefaults(), ...upgraded.ramadanConfig };
   upgraded.profile = { ...defaults(), ...upgraded.profile };
   upgraded.settings = { ...fresh().settings, ...upgraded.settings };
   if (!validate(upgraded)) throw new Error("Invalid upgraded format");
@@ -37,20 +38,25 @@ let lastSaved = null,
   snapshotQueue = Promise.resolve();
 export const storage = {
   key: "istiqamah.v1",
-  migrationKey: "istiqamah.migration.v2",
+  migrationKey: "istiqamah.migration.v3",
   async load() {
     try {
       const raw = localStorage.getItem(this.key);
       lastSaved = raw;
       if (!raw) return fresh();
-      const old = JSON.parse(raw),
-        upgraded = migrate(old);
+      // Checkpoint exact original bytes before parsing or transforming any records.
+      if (localStorage.getItem(this.migrationKey) == null) {
+        localStorage.setItem(this.migrationKey, raw);
+        if (localStorage.getItem(this.migrationKey) !== raw) throw Error("Backup failed");
+      } else if (localStorage.getItem(this.migrationKey) !== raw) {
+        const parsed = JSON.parse(raw);
+        if ((parsed.schemaVersion || 0) < SCHEMA_VERSION) {
+          await snapshots.checkpoint(raw, "migration-v3");
+          if (!(await snapshots.checkpoints()).some(c => c.data === raw)) throw Error("Backup verification failed");
+        }
+      }
+      const old = JSON.parse(raw), upgraded = migrate(old);
       if ((old.schemaVersion || 0) < SCHEMA_VERSION) {
-        // The exact bytes must be recoverable before committing a migration.
-        if (localStorage.getItem(this.migrationKey) == null)
-          localStorage.setItem(this.migrationKey, raw);
-        if (localStorage.getItem(this.migrationKey) !== raw)
-          await snapshots.checkpoint(raw, "migration");
         if (localStorage.getItem(this.key) !== raw)
           throw new Error("Concurrent migration");
         const serialized = JSON.stringify(upgraded);
@@ -98,11 +104,16 @@ export const storage = {
       .then(() => snapshots.put(date, data));
     return snapshotQueue;
   },
-  async replace(incoming) {
-    const next = migrate(incoming);
+  async replace(incoming, originalBytes, envelopeBytes) {
+    if (!validate(incoming)) throw Error("Invalid backup");
     const raw = localStorage.getItem(this.key);
     // A failed undo backup prevents a destructive replacement.
     if (raw) await snapshots.checkpoint(raw, "before-restore");
+    if(envelopeBytes) await snapshots.checkpoint(envelopeBytes,"import-encrypted-original");
+    const incomingRaw=originalBytes ?? JSON.stringify(incoming);
+    await snapshots.checkpoint(incomingRaw,"import-before-migration");
+    if(!(await snapshots.checkpoints()).some(c=>c.data===incomingRaw)) throw Error("Backup verification failed");
+    const next = migrate(incoming);
     const serialized = JSON.stringify(next);
     if (localStorage.getItem(this.key) !== raw)
       throw new Error("Another tab changed the data");
@@ -163,7 +174,7 @@ function validate(s) {
   if (
     !obj(s) ||
     s.version !== 1 ||
-    (s.schemaVersion != null && ![1, 2].includes(s.schemaVersion)) ||
+    (s.schemaVersion != null && ![1, 2, 3].includes(s.schemaVersion)) ||
     typeof s.onboarded !== "boolean" ||
     !obj(s.profile) ||
     !list(s.habits, 100, habit) ||
@@ -269,8 +280,8 @@ function validate(s) {
     !num(s.tasbih.count, 0, 1e12) ||
     (s.tasbih.selected != null &&
       !(
-        text(s.tasbih.selected, 30) &&
-        /^(?:(?:morning|evening)-\d{1,2}|seen-(?:morning|evening)-\d{1,2})?$/.test(
+        text(s.tasbih.selected, 80) &&
+        /^(?:(?:morning|evening)-\d{1,2}|seen-(?:morning|evening)-\d{1,2}|azkar-[a-f0-9]{20})?$/.test(
           s.tasbih.selected,
         )
       )) ||
@@ -288,6 +299,15 @@ function validate(s) {
       ))
   )
     return false;
+  if (s.schemaVersion === 3 && (!validRamadan(s.ramadanConfig) ||
+      !obj(s.adhkarPrefs) || !list(s.adhkarPrefs.favorites, 500, id) ||
+      !text(s.adhkarPrefs.selected,80) || !text(s.adhkarPrefs.search,1000) ||
+      !text(s.adhkarPrefs.category,80) ||
+      !record(s.adhkarPrefs.personalTargets,500,v=>num(v,1,1e4)) ||
+      Object.values(s.days).some(d =>
+        !record(d.adhkarCounts || {},500,v=>num(v,0,1e4)) ||
+        !record(d.earlierAdhkar || {},500,v=>num(v,0,1e4)) ||
+        d.ramadanV3 != null && !validRamadan(d.ramadanV3,true)))) return false;
   return true;
 }
 

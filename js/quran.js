@@ -1,5 +1,5 @@
-import { contentService } from "./content.js?v=1.2.0";
-import { session } from "./session.js?v=1.2.0";
+import { contentService } from "./content.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.0";
 
 const quranService = {
   daily: () => contentService.daily("quran"),

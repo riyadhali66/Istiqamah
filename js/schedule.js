@@ -1,16 +1,17 @@
-import { prayerService } from "./prayer.js?v=1.2.0";
-import { session } from "./session.js?v=1.2.0";
-import { CATEGORIES, timezone } from "./config.js?v=1.2.0";
-import { modal } from "./ui/core.js?v=1.2.0";
-import { t } from "./i18n.js?v=1.2.0";
-import { $, download, esc, icon, money } from "./utils.js?v=1.2.0";
-import { offsetDay } from "./dates.js?v=1.2.0";
+import { ramadanService } from "./ramadan.js?v=2.1.0";
+import { prayerService } from "./prayer.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.0";
+import { CATEGORIES, timezone } from "./config.js?v=2.1.0";
+import { modal } from "./ui/core.js?v=2.1.0";
+import { t } from "./i18n.js?v=2.1.0";
+import { $, download, esc, icon, money } from "./utils.js?v=2.1.0";
+import { offsetDay } from "./dates.js?v=2.1.0";
 import {
   isPaused,
   monthKeys,
   monthlyHabits,
   score,
-} from "./records.js?v=1.2.0";
+} from "./records.js?v=2.1.0";
 
 function currentSchedule(key) {
   const prayers = prayerService.calculate(key),
@@ -107,10 +108,11 @@ function currentSchedule(key) {
       note: "Prayer",
     })),
   );
+  blocks.push(...ramadanService.preparation(key));
   return blocks.sort((a, b) => a.time.localeCompare(b.time));
 }
 function showSchedule() {
-  const blocks = currentSchedule(session.selectedDate).filter((b) => !b.prayer);
+  const blocks = currentSchedule(session.selectedDate).filter((b) => !b.prayer && !b.ramadanPrep);
   modal(
     "Your daily rhythm",
     `<form id="schedule-form"><small>${t("Prayer times")} \xB7 ${esc(session.state.profile.method)} \xB7 ${t("Saved on this device")}</small>${blocks.map((b) => `<div class="edit-row"><input type="time" data-block-time="${b.id}" value="${esc(b.time)}" required aria-label="${t("Your daily rhythm")}" style="width:110px"><input data-block-label="${b.id}" value="${esc(t(b.label))}" required maxlength="120" aria-label="${t("Name")}"><button type="button" data-action="remove-block" data-id="${b.id}" aria-label="${t("Remove")}">\xD7</button></div>`).join("")}<button class="btn section-gap">${t("Save")}</button></form><form id="block-form" class="section-gap"><h3>${t("Add habit")} \xB7 ${t("Your daily rhythm")}</h3><label>${t("Name")}</label><input name="label" required maxlength="120"><label>${t("Your daily rhythm")}</label><input name="time" type="time" required value="12:00"><button class="btn secondary section-gap">${icon("plus")}${t("Save")}</button></form>`,
@@ -169,7 +171,7 @@ function exportCalendar(days) {
   for (let i = 0; i < days; i++) {
     let key = offsetDay(session.selectedDate, i);
     for (let b of currentSchedule(key)) {
-      let start = b.prayer
+      let start = b.instant ? new Date(b.instant) : b.prayer
         ? prayerService.calculate(key).find((p) => p.name === b.label)?.date
         : zonedDate(key, b.time);
       if (!start || !Number.isFinite(+start)) continue;

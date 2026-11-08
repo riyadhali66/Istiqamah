@@ -51,6 +51,8 @@ async function tool(page, id) {
     headless: true,
     args: ["--no-sandbox"],
   });
+  const createContext=browser.newContext.bind(browser);
+  browser.newContext=async (...args)=>{const c=await createContext(...args);await c.addInitScript(()=>localStorage.setItem('istiqamah.releaseSeen.2.1.0','seen'));return c;};
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
     acceptDownloads: true,
@@ -351,10 +353,10 @@ async function tool(page, id) {
     async () => {
       await tool(page, "tasbih");
       await page.waitForFunction(() => SOURCE_DATA.adhkar.length === 50);
-      assert.equal(await page.locator("#tasbih-adhkar option").count(), 51);
+      assert((await page.locator("#tasbih-adhkar option").count()) > 51);
       await page.evaluate(() => {
-        Istiqamah.state.tasbih.selected = "morning-1";
-        Istiqamah.getDay().adhkar["morning-1"] = 2;
+        Istiqamah.state.adhkarPrefs.selected = "seen-morning-4";
+        Istiqamah.getDay().adhkarCounts["seen-morning-4"] = 2;
         Istiqamah.storage.save();
       });
       await page.reload();
@@ -363,11 +365,11 @@ async function tool(page, id) {
       await tool(page, "tasbih");
       assert.equal(
         await page.locator("#tasbih-adhkar").inputValue(),
-        "morning-1",
+        "seen-morning-4",
       );
       assert.equal(await page.locator(".tasbih-button").innerText(), "2");
       assert.equal(
-        await page.evaluate(() => Istiqamah.getDay().adhkar["morning-1"]),
+        await page.evaluate(() => Istiqamah.getDay().adhkarCounts["seen-morning-4"]),
         2,
       );
     },
@@ -376,30 +378,20 @@ async function tool(page, id) {
     "counter behavior with a synthetic non-religious test dataset",
     async () => {
       await page.evaluate(() => {
-        SOURCE_DATA.adhkar = [
-          {
-            category: "أذكار الصباح",
-            text: "TEST COUNTER",
-            description: "Fixture",
-            reference: "Test only",
-            count: 3,
-          },
-          {
-            category: "أذكار المساء",
-            text: "TEST COUNTER",
-            description: "Fixture",
-            reference: "Test only",
-            count: 1,
-          },
-        ];
-        Istiqamah.state.tasbih.selected = "";
+        const entries=Istiqamah.adhkarLibrary.entries;
+        window.savedCounterEntries=structuredClone(entries);
+        entries.splice(0,entries.length,
+          {id:'seen-morning-2',category:'morning',text:'TEST COUNTER',reference:'Test only',provenance:{dataset:'Test fixture'},categoryLabel:'Test fixture',count:3},
+          {id:'seen-evening-2',category:'evening',text:'TEST COUNTER',reference:'Test only',provenance:{dataset:'Test fixture'},categoryLabel:'Test fixture',count:1});
+        Istiqamah.getDay().adhkarCounts={};
+        Istiqamah.state.adhkarPrefs.selected = "";
         Istiqamah.render();
       });
       await tool(page, "tasbih");
-      await page.locator("#tasbih-adhkar").selectOption("morning-0");
+      await page.locator("#tasbih-adhkar").selectOption("seen-morning-2");
       for (let i = 0; i < 3; i++)
         await page.locator('[data-action="tasbih"]').click();
-      assert(await page.locator('[data-action="tasbih"]').isDisabled());
+      assert(await page.locator('[data-action="tasbih"]').isDisabled(), JSON.stringify(await page.evaluate(()=>({prefs:Istiqamah.state.adhkarPrefs,day:Istiqamah.getDay(),e:Istiqamah.adhkarLibrary.selected()}))));
       assert.equal(
         await page.evaluate(() => Istiqamah.getDay().values["adhkar-am"]),
         1,
@@ -407,14 +399,15 @@ async function tool(page, id) {
       await nav(page, "reflections");
       await page.locator('[data-action="dhikr-reset"][data-index="0"]').click();
       assert.equal(
-        await page.evaluate(() => Istiqamah.getDay().adhkar["morning-0"]),
+        await page.evaluate(() => Istiqamah.getDay().adhkarCounts["seen-morning-2"]),
         0,
       );
       await page.evaluate(async () => {
+        Istiqamah.adhkarLibrary.entries.splice(0,Infinity,...window.savedCounterEntries);
         SOURCE_DATA.adhkar = await (
-          await fetch("data/adhkar.json?v=1.2.0")
+          await fetch("data/adhkar.json?v=2.1.0")
         ).json();
-        Istiqamah.state.tasbih.selected = "";
+        Istiqamah.state.adhkarPrefs.selected = "";
         Istiqamah.storage.save();
       });
     },

@@ -1,4 +1,4 @@
-import { contentService } from "./content.js?v=1.2.0";
+import { contentService } from "./content.js?v=2.1.0";
 
 const hadithService = {
   providers: {

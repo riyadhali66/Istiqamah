@@ -690,7 +690,7 @@ main {
   line-height: 1.65;
 }
 .quran {
-  font-family: Amiri, Amiri, serif;
+  font-family: Uthmani, Amiri, serif;
   font-size: 28px;
   line-height: 1.9;
   direction: rtl;
@@ -1691,3 +1691,4 @@ html[lang="en"] .hero h2 {
     width: 100px;
   }
 }
+[hidden]{display:none!important}.release-banner{position:sticky;top:0;z-index:100;display:flex;gap:16px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--cream,#f4f5ef);color:var(--ink,#143b32);padding:16px;border-bottom:2px solid #ad8c48}.adhkar-chooser,.adhkar-selected{max-width:700px;margin:24px auto;text-align:start}.adhkar-selected .quote{white-space:pre-line;overflow-wrap:anywhere;max-height:none;overflow:visible}.adhkar-chooser select{max-width:100%;text-overflow:ellipsis}#release-notes{max-width:min(560px,90vw);padding:28px}#release-notes p{margin:18px 0}#boot-recovery{max-width:680px;margin:24px auto}#boot-wait{padding:24px;text-align:center}

@@ -1,4 +1,6 @@
-import { ramadanService } from "./ramadan.js?v=1.2.0";
+import { releaseNotes } from "./release.js?v=2.1.0";
+import { adhkarLibrary } from "./adhkar-library.js?v=2.1.0";
+import { ramadanService } from "./ramadan.js?v=2.1.0";
 import {
   maybeRamadanSetup,
   skipRamadanSetup,
@@ -7,8 +9,8 @@ import {
   ramadanTick,
   printRamadan,
   shareEid,
-} from "./ui/ramadan.js?v=1.2.0";
-import { session } from "./session.js?v=1.2.0";
+} from "./ui/ramadan.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.0";
 import {
   addWizardDebt,
   finishPlan,
@@ -17,8 +19,8 @@ import {
   showWizard,
   updateProfile,
   validateDraft,
-} from "./ui/onboarding.js?v=1.2.0";
-import { modal, render } from "./ui/core.js?v=1.2.0";
+} from "./ui/onboarding.js?v=2.1.0";
+import { modal, render } from "./ui/core.js?v=2.1.0";
 import {
   categoryScore,
   dayHabits,
@@ -29,35 +31,35 @@ import {
   score,
   streak,
   syncTodayHabits,
-} from "./records.js?v=1.2.0";
-import { $, $$, toast, uid } from "./utils.js?v=1.2.0";
-import { adhkarService, tasbihSelection } from "./adhkar.js?v=1.2.0";
-import { offsetDay, today } from "./dates.js?v=1.2.0";
-import { engine } from "./engine.js?v=1.2.0";
+} from "./records.js?v=2.1.0";
+import { $, $$, toast, uid } from "./utils.js?v=2.1.0";
+import { adhkarService, tasbihSelection } from "./adhkar.js?v=2.1.0";
+import { offsetDay, today } from "./dates.js?v=2.1.0";
+import { engine } from "./engine.js?v=2.1.0";
 import {
   currentSchedule,
   exportCalendar,
   printTracker,
   showSchedule,
   zonedDate,
-} from "./schedule.js?v=1.2.0";
-import { storage, validate } from "./storage.js?v=1.2.0";
-import { t, loadTranslations } from "./i18n.js?v=1.2.0";
-import { loadInitialContent, loadHadith } from "./content.js?v=1.2.0";
-import { quranService } from "./quran.js?v=1.2.0";
+} from "./schedule.js?v=2.1.0";
+import { storage, validate } from "./storage.js?v=2.1.0";
+import { t, loadTranslations } from "./i18n.js?v=2.1.0";
+import { loadInitialContent, loadHadith } from "./content.js?v=2.1.0";
+import { quranService } from "./quran.js?v=2.1.0";
 import {
   notifications,
   playAdhan,
   playAudio,
   pomodoro,
   tickTimer,
-} from "./reminders.js?v=1.2.0";
-import { defaults, fresh, timezone } from "./config.js?v=1.2.0";
-import { registerWorker } from "./offline.js?v=1.2.0";
-import { prayerService } from "./prayer.js?v=1.2.0";
-import { hijriService } from "./hijri.js?v=1.2.0";
-import { hadithService } from "./hadith.js?v=1.2.0";
-import { ui } from "./ui/views.js?v=1.2.0";
+} from "./reminders.js?v=2.1.0";
+import { defaults, fresh, timezone } from "./config.js?v=2.1.0";
+import { registerWorker } from "./offline.js?v=2.1.0";
+import { prayerService } from "./prayer.js?v=2.1.0";
+import { hijriService } from "./hijri.js?v=2.1.0";
+import { hadithService } from "./hadith.js?v=2.1.0";
+import { ui } from "./ui/views.js?v=2.1.0";
 
 ("use strict");
 window.addEventListener("beforeinstallprompt", (e) => {
@@ -69,6 +71,8 @@ document.addEventListener("click", async (e) => {
   if (!el || el.disabled) return;
   const { action, id, value, index, key } = el.dataset;
   switch (action) {
+    case "ramadan-toggle":
+      ramadanService.mode(ramadanService.context().active?"off":"on");render();break;
     case "ramadan-setup-skip":
       skipRamadanSetup();
       break;
@@ -198,7 +202,7 @@ document.addEventListener("click", async (e) => {
       render();
       break;
     case "dhikr-reset":
-      getDay().adhkar[adhkarService.key(session.adhkarTab, Number(index))] = 0;
+      adhkarLibrary.set(adhkarService.list(session.adhkarTab)[Number(index)],0,session.selectedDate);
       getDay().values[
         session.adhkarTab === "morning" ? "adhkar-am" : "adhkar-pm"
       ] = 0;
@@ -206,12 +210,13 @@ document.addEventListener("click", async (e) => {
       render();
       break;
     case "tasbih": {
+      if(session.state.adhkarPrefs.selected && !adhkarLibrary.selected())break;
       const selected = tasbihSelection();
       if (selected) {
-        const previous = getDay(today()).adhkar[selected.key] || 0;
-        if (previous >= selected.entry.count) break;
+        const previous = adhkarLibrary.count(selected.entry);
+        if (adhkarLibrary.target(selected.entry) && previous >= adhkarLibrary.target(selected.entry)) break;
         adhkarService.increment(selected.period, selected.index, today());
-        const count = getDay(today()).adhkar[selected.key];
+        const count = adhkarLibrary.count(selected.entry);
         if ([33, 100].includes(count) || count === selected.entry.count)
           navigator.vibrate?.(150);
       } else {
@@ -233,27 +238,17 @@ document.addEventListener("click", async (e) => {
       render();
       break;
     }
-    case "tasbih-next": {
-      const selected = tasbihSelection();
-      if (selected)
-        session.state.tasbih.selected = adhkarService.key(
-          selected.period,
-          (selected.index + 1) % adhkarService.list(selected.period).length,
-        );
-      save();
-      render();
-      break;
-    }
+    case "dhikr-favorite":
+      if (adhkarLibrary.selected()) adhkarLibrary.favorite(adhkarLibrary.selected().id);
+      render(); break;
+    case "tasbih-previous":
+    case "tasbih-next":
+      adhkarLibrary.move(action === "tasbih-next" ? 1 : -1); render(); break;
     case "tasbih-reset": {
-      const selected = tasbihSelection();
-      if (selected) {
-        const d = getDay(today());
-        d.adhkar[selected.key] = 0;
-        d.values[selected.period === "morning" ? "adhkar-am" : "adhkar-pm"] = 0;
-      } else session.state.tasbih.count = 0;
-      save();
-      render();
-      break;
+      if(session.state.adhkarPrefs.selected && !adhkarLibrary.selected())break;
+      const entry = adhkarLibrary.selected();
+      if(entry) adhkarLibrary.set(entry,0); else session.state.tasbih.count=0;
+      save(); render(); break;
     }
     case "tasbih-goal":
       session.state.tasbih.goal = +value;
@@ -368,22 +363,22 @@ document.addEventListener("click", async (e) => {
       printTracker();
       break;
     case "encrypted-backup":
-      (await import("./ui/backups.js?v=1.2.0")).showEncryptedExport();
+      (await import("./ui/backups.js?v=2.1.0")).showEncryptedExport();
       break;
     case "restore-days":
-      await (await import("./ui/backups.js?v=1.2.0")).showRestoreDays();
+      await (await import("./ui/backups.js?v=2.1.0")).showRestoreDays();
       break;
     case "choose-snapshot":
-      (await import("./ui/backups.js?v=1.2.0")).chooseSnapshot(Number(id));
+      (await import("./ui/backups.js?v=2.1.0")).chooseSnapshot(Number(id));
       break;
     case "export-original":
       storage.exportOriginal();
       break;
     case "download-optional":
-      await (await import("./ui/downloads.js?v=1.2.0")).installOptional(id, el);
+      await (await import("./ui/downloads.js?v=2.1.0")).installOptional(id, el);
       break;
     case "remove-optional":
-      await (await import("./ui/downloads.js?v=1.2.0")).deleteOptional();
+      await (await import("./ui/downloads.js?v=2.1.0")).deleteOptional();
       break;
     case "backup":
       storage.export();
@@ -415,11 +410,11 @@ document.addEventListener("click", async (e) => {
       await notifications();
       break;
     case "check-updates":
+      await window.IstiqamahCheckUpdate?.();
       if ("serviceWorker" in navigator) {
         const registration = await navigator.serviceWorker.getRegistration();
         if (registration) await registration.update().catch(() => {});
       }
-      location.reload();
       break;
     case "install":
       if (session.installEvent) {
@@ -451,6 +446,19 @@ document.addEventListener("click", async (e) => {
 });
 document.addEventListener("change", async (e) => {
   const el = e.target;
+  if (el.id === "ramadan-start-date") {
+    if(/^\d{4}-\d{2}-\d{2}$/.test(el.value)) {ramadanService.config().manualStart=el.value;ramadanService.config().mode="on";save();render();}return;
+  }
+  if(el.dataset.completion) {
+    const c=ramadanService.config().completion,k=el.dataset.completion;
+    c[k]=k==='enabled'?el.checked:k==='pages'?Math.max(0,Math.min(1e6,+el.value||0)):el.value;
+    c.setOn=today();save();render();return;
+  }
+  if(el.dataset.ramadanGoal) {ramadanService.config().goals[el.dataset.ramadanGoal]=el.checked;save();render();return;}
+  if(el.dataset.ramadanConfig) {
+    const k=el.dataset.ramadanConfig;
+    ramadanService.config()[k]=k==='nightGoals'?el.value:k==='dailyTargetEnabled'?el.checked:Math.max(0,Math.min(k==='dailyPages'?1e6:180,+el.value||0));save();render();return;
+  }
   if (el.id === "ramadan-mode") {
     ramadanService.mode(el.value);
     render();
@@ -484,7 +492,7 @@ document.addEventListener("change", async (e) => {
       ramadanService.config()[key] = value;
       if (!ramadanService.context().preview) save();
     } else {
-      const value = el.type === "checkbox" ? el.checked : Number(el.value);
+      const value = key === "reason" ? el.value : el.type === "checkbox" ? el.checked : Number(el.value);
       if (
         typeof value === "number" &&
         (!Number.isFinite(value) || value < 0 || value > 1e6)
@@ -636,8 +644,16 @@ document.addEventListener("change", async (e) => {
       session.state.settings.sound = el.value;
       save();
       break;
+    case "adhkar-category":
+      session.state.adhkarPrefs.category=el.value;save();render();break;
+    case "adhkar-search":
+      session.state.adhkarPrefs.search=el.value;save();render();break;
+    case "dhikr-personal-target":
+      if(adhkarLibrary.selected() && +el.value>=1 && +el.value<=10000)
+        session.state.adhkarPrefs.personalTargets[adhkarLibrary.selected().id]=+el.value;
+      save();render();break;
     case "tasbih-adhkar":
-      session.state.tasbih.selected = el.value;
+      session.state.adhkarPrefs.selected = el.value;
       save();
       render();
       break;
@@ -647,7 +663,7 @@ document.addEventListener("change", async (e) => {
       break;
     case "import-file":
       await (
-        await import("./ui/backups.js?v=1.2.0")
+        await import("./ui/backups.js?v=2.1.0")
       ).handleBackupFile(el.files[0]);
       el.value = "";
       break;
@@ -655,6 +671,11 @@ document.addEventListener("change", async (e) => {
 });
 document.addEventListener("input", (e) => {
   const el = e.target;
+  if(el.id === "adhkar-search" && !e.isComposing){
+    const start=el.selectionStart,end=el.selectionEnd;
+    session.state.adhkarPrefs.search=el.value;save();render();
+    const next=$("#adhkar-search");next?.focus();next?.setSelectionRange(start,end);return;
+  }
   if (el.dataset.journal) {
     getDay().journal[el.dataset.journal] = el.value;
     save();
@@ -768,6 +789,7 @@ window.addEventListener("storage", (e) => {
 session.lang = "en";
 session.storageError = false;
 session.state = await storage.load();
+import("./optional-content.js?v=2.1.0").then(m=>m.loadOptionalFont()).catch(()=>{});
 session.lang = ["en", "ar", "ur", "ml", "hi"].includes(
   session.state.profile.language,
 )
@@ -813,6 +835,7 @@ loadInitialContent()
   })
   .catch(() => toast("Readings could not be loaded. Your records are safe."));
 setInterval(() => {
+  releaseNotes();
   prayerService.tick();
   ramadanTick();
   tickTimer();
@@ -837,6 +860,7 @@ window.Istiqamah = {
   quranService,
   hadithService,
   adhkarService,
+  adhkarLibrary,
   storage,
   ui,
   score,

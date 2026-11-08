@@ -1,8 +1,8 @@
-import { view_shell as shell } from "./shell.js?v=1.2.0";
-import { view_top as top } from "./top.js?v=1.2.0";
-import { view_heading as heading } from "./heading.js?v=1.2.0";
-import { view_footer as footer } from "./footer.js?v=1.2.0";
-import { view_today as today } from "./today.js?v=1.2.0";
+import { view_shell as shell } from "./shell.js?v=2.1.0";
+import { view_top as top } from "./top.js?v=2.1.0";
+import { view_heading as heading } from "./heading.js?v=2.1.0";
+import { view_footer as footer } from "./footer.js?v=2.1.0";
+import { view_today as today } from "./today.js?v=2.1.0";
 const ui = { shell, top, heading, footer, today };
 const pending = new Map();
 export function ensureView(page) {
@@ -28,7 +28,7 @@ export function ensureView(page) {
         if (!files) throw new Error("Unknown page");
         const views = await Promise.all(
           files.map(async (file) => {
-            const view = await import(`./${file}.js?v=1.2.0`);
+            const view = await import(`./${file}.js?v=2.1.0`);
             return [file, view["view_" + file]];
           }),
         );

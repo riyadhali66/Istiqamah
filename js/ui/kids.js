@@ -1,7 +1,7 @@
-import { t } from "../i18n.js?v=1.2.0";
-import { session } from "../session.js?v=1.2.0";
-import { getDay } from "../records.js?v=1.2.0";
-import { esc } from "../utils.js?v=1.2.0";
+import { t } from "../i18n.js?v=2.1.0";
+import { session } from "../session.js?v=2.1.0";
+import { getDay } from "../records.js?v=2.1.0";
+import { esc } from "../utils.js?v=2.1.0";
 
 function view_kids() {
   return `<div class="notice">${t("Your journey, at your pace.")} \u2727 ${t("Good deeds")}</div><div class="stack">${session.state.children

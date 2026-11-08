@@ -53,3 +53,11 @@ for (const [name, bytes] of [
 console.log(
   "PASS: exact MIT source text/counts/references/English, license, and Tirmidhi text/grades",
 );
+const azkarRoot='https://raw.githubusercontent.com/osamayy/azkar-db/fbdfa017782c907fd0ca4ee2726060cbc527072f/';
+const azkarBytes=get(azkarRoot+'azkar.json'), permission=get(azkarRoot+'README.md');
+assert(permission.equals(fs.readFileSync('data/AZKAR-REUSE.txt')));
+assert.equal(crypto.createHash('sha256').update(azkarBytes).digest('hex'),'071893211f6c711d7fb389826a7bcc79ac1ad2f0c13bdb4cc3bd38e871480a6c');
+const rows=JSON.parse(azkarBytes).rows,legacy=JSON.parse(fs.readFileSync('data/adhkar-legacy.json','utf8'));
+for(const e of legacy){const r=rows.find(r=>r[0]===e.sourceCategory&&r[1]===e.text&&(r[4]||'')===e.reference);assert(r);assert.equal(e.description,r[2]||'');assert.equal(e.count,/^\d+$/.test(String(r[3]||''))&&+r[3]>0?+r[3]:null);assert.deepEqual(e.translations,{});}
+const previous=fs.readFileSync('js/adhkar-data.js');execFileSync('python3',['tools/build-adhkar.py']);assert(previous.equals(fs.readFileSync('js/adhkar-data.js')));
+console.log('PASS: exact 113 Azkar source rows, reuse grant, deterministic Seen-primary catalog and ID map');

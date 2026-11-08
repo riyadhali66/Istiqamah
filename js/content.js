@@ -1,5 +1,5 @@
-import { dateObj } from "./dates.js?v=1.2.0";
-import { session } from "./session.js?v=1.2.0";
+import { dateObj } from "./dates.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.0";
 
 const contentService = {
   index(key, len) {
@@ -29,7 +29,7 @@ export { contentService };
 // A small initial reading set; the larger hadith collection loads after first paint.
 async function loadPart(kind) {
   const response = await fetch(
-    new URL(`../data/${kind}.json?v=1.2.0`, import.meta.url),
+    new URL(`../data/${kind}.json?v=2.1.0`, import.meta.url),
   );
   if (!response.ok) throw new Error("Bundled readings unavailable");
   window.SOURCE_DATA[kind] = await response.json();

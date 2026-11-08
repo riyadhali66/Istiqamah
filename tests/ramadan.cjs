@@ -34,7 +34,7 @@ module.exports = async ({ browser, base, check, seed }) => {
   async function setDate(page, date) {
     await page.clock.setFixedTime(new Date(date + "T08:00:00+04:00"));
     await page.evaluate(async () => {
-      const { session } = await import("./js/session.js?v=1.2.0");
+      const { session } = await import("./js/session.js?v=2.1.0");
       session.selectedDate = Istiqamah.today();
       Istiqamah.render();
     });
@@ -165,6 +165,7 @@ module.exports = async ({ browser, base, check, seed }) => {
       await page.locator("#ramadan-sadaqah").fill("5");
       await page.locator('[data-ramadan="setupNotFasting"]').check();
       await page.locator('[data-action="ramadan-setup-next"]').click();
+      await page.locator('[data-ramadan="makeUpNeeded"]').check();
       assert.equal(
         await page.evaluate(() => Istiqamah.ramadanService.qada().remaining),
         1,
@@ -176,6 +177,7 @@ module.exports = async ({ browser, base, check, seed }) => {
       );
       await setDate(page, "2027-02-09");
       await page.locator('[data-ramadan="notFasting"]').check();
+      await page.locator('[data-ramadan="makeUpNeeded"]').check();
       await setDate(page, "2027-02-10");
       await page.locator('[data-ramadan="fasted"]').check();
       assert.equal(
@@ -219,9 +221,10 @@ module.exports = async ({ browser, base, check, seed }) => {
       await page.locator("#day-picker").fill("2027-02-09");
       await page.locator("#day-picker").dispatchEvent("change");
       await page.locator('[data-ramadan="notFasting"]').check();
+      await page.locator('[data-ramadan="makeUpNeeded"]').check();
       assert.equal(
         await page.evaluate(
-          () => Istiqamah.state.days["2027-02-09"].ramadan.notFasting,
+          () => Istiqamah.state.days["2027-02-09"].ramadanV3.notFasting,
         ),
         true,
       );
@@ -284,6 +287,7 @@ module.exports = async ({ browser, base, check, seed }) => {
         .click();
       await page.locator("#ramadan-preview").selectOption("30");
       await page.locator('[data-ramadan="notFasting"]').check();
+      await page.locator('[data-ramadan="makeUpNeeded"]').check();
       await page.locator('[data-ramadan="pages"]').fill("10");
       await page.locator('[data-ramadan="pages"]').blur();
       assert.equal(
@@ -340,21 +344,21 @@ module.exports = async ({ browser, base, check, seed }) => {
     },
   );
   await check(
-    "real schema 1 migrates to 2 with original bytes, no old-field changes and idempotence",
+    "real schema 1 migrates to 3 with original bytes, no old-field changes and idempotence",
     async () => {
       const { context, page } = await open("2026-11-08");
       const result = await page.evaluate(async () => {
-        const { migrate } = await import("./js/storage.js?v=1.2.0");
+        const { migrate } = await import("./js/storage.js?v=2.1.0");
         return {
           state: Istiqamah.state,
-          original: localStorage.getItem("istiqamah.migration.v2"),
+          original: localStorage.getItem("istiqamah.migration.v3"),
           idempotent:
             JSON.stringify(migrate(Istiqamah.state)) ===
             JSON.stringify(migrate(migrate(Istiqamah.state))),
         };
       });
       assert.equal(result.original, JSON.stringify(legacy));
-      assert.equal(result.state.schemaVersion, 2);
+      assert.equal(result.state.schemaVersion, 3);
       for (const key of Object.keys(legacy))
         if (key !== "schemaVersion")
           assert.deepEqual(result.state[key], legacy[key]);
@@ -374,8 +378,8 @@ module.exports = async ({ browser, base, check, seed }) => {
       const aliases = entries.map((e) => e.legacyKey).filter(Boolean);
       assert.equal(new Set(aliases).size, aliases.length);
       await page.evaluate(() => {
-        Istiqamah.getDay().adhkar["morning-14"] = 2;
-        Istiqamah.state.tasbih.selected = "morning-14";
+        Istiqamah.getDay().earlierAdhkar["morning-14"] = 2;
+        Istiqamah.state.adhkarPrefs.selected = "";
         Istiqamah.storage.save();
       });
       await page
@@ -384,12 +388,12 @@ module.exports = async ({ browser, base, check, seed }) => {
         .click();
       await page.locator('[data-action="tool"][data-id="tasbih"]').click();
       assert(
-        (await page.locator("#tasbih-adhkar").innerText()).includes(
+        (await page.locator("body").innerText()).includes(
           "Earlier counter progress",
         ),
       );
-      assert.equal(await page.locator(".tasbih-button").innerText(), "2");
-      assert(await page.locator(".tasbih-button").isDisabled());
+      await page.locator("details").filter({has:page.locator("summary",{hasText:"Earlier counter progress"})}).locator("summary").click();
+      assert((await page.locator("body").innerText()).includes("morning-14: 2"));
       await context.close();
     },
   );

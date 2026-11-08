@@ -1,16 +1,12 @@
-import { t } from "../i18n.js?v=1.2.0";
-import { session } from "../session.js?v=1.2.0";
-import { adhkarService } from "../adhkar.js?v=1.2.0";
-import { getDay } from "../records.js?v=1.2.0";
-import { esc, icon } from "../utils.js?v=1.2.0";
+import { earlierProgress } from "./tasbih.js?v=2.1.0";
+import { t } from "../i18n.js?v=2.1.0";
+import { session } from "../session.js?v=2.1.0";
+import { adhkarService } from "../adhkar.js?v=2.1.0";
+import { getDay } from "../records.js?v=2.1.0";
+import { esc, icon } from "../utils.js?v=2.1.0";
 
 function view_reflections() {
-  const previous = Object.entries(getDay().adhkar).filter(
-    ([key, value]) => value > 0 && /^(morning|evening)-/.test(key),
-  );
-  const earlier = previous.length
-    ? `<details class="card section-gap"><summary>${t("Earlier counter progress")}</summary><p>${t("Earlier entries are kept unchanged; some source entries differ.")}</p>${previous.map(([key, value]) => `<p>${t(key.startsWith("morning") ? "Morning adhkar" : "Evening adhkar")} #${Number(key.split("-")[1]) + 1}: ${value}</p>`).join("")}</details>`
-    : "";
+  const earlier = earlierProgress(session.selectedDate);
   return (
     this.heading(t("Reflections"), "Your quiet reflection") +
     `<div class="tabs"><button class="tab ${session.adhkarTab === "morning" ? "active" : ""}" data-action="adhkar-tab" data-id="morning">${t("Morning adhkar")}</button><button class="tab ${session.adhkarTab === "evening" ? "active" : ""}" data-action="adhkar-tab" data-id="evening">${t("Evening adhkar")}</button></div><div class="notice">${t("Arabic source text")} \xB7 Seen Arabic · MIT. ${t("Arabic source text")}</div><section class="card">${!adhkarService.list(session.adhkarTab).length ? `<p>${t("Download optional adhkar in Settings. Your saved counts are kept.")}</p><button class="btn secondary" data-action="nav" data-id="settings">${t("Settings")}</button>` : ""}${adhkarService

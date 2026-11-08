@@ -1,5 +1,5 @@
 "use strict";
-const CACHE = "istiqamah-v1-2-ramadan-20261108-c";
+const CACHE = "istiqamah-v2-1-0-release";
 const SHELL = [
   "./",
   "./index.html",
@@ -7,6 +7,11 @@ const SHELL = [
   "./icon.svg",
   "./icon-192.png",
   "./icon-512.png",
+  "./js/boot.js",
+  "./js/release.js",
+  "./js/migrations.js",
+  "./js/adhkar-data.js",
+  "./js/adhkar-library.js",
   "./js/adhkar.js",
   "./js/app.js",
   "./js/backup-crypto.js",
@@ -77,10 +82,10 @@ self.addEventListener("install", (event) => {
         cache.addAll(
           SHELL.map((path) => new Request(path, { cache: "reload" })),
         ),
-      )
-      .then(() => self.skipWaiting()),
+      ),
   );
 });
+self.addEventListener("message", event => { if(event.data?.type === "SKIP_WAITING") self.skipWaiting(); });
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches

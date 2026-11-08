@@ -1,9 +1,9 @@
-import { session } from "./session.js?v=1.2.0";
-import { today, offsetDay } from "./dates.js?v=1.2.0";
-import { hijriService } from "./hijri.js?v=1.2.0";
-import { prayerService } from "./prayer.js?v=1.2.0";
-import { storage } from "./storage.js?v=1.2.0";
-import { getDay } from "./records.js?v=1.2.0";
+import { session } from "./session.js?v=2.1.0";
+import { today, offsetDay } from "./dates.js?v=2.1.0";
+import { hijriService } from "./hijri.js?v=2.1.0";
+import { prayerService } from "./prayer.js?v=2.1.0";
+import { storage } from "./storage.js?v=2.1.0";
+import { getDay } from "./records.js?v=2.1.0";
 const span = (a, b) =>
   Math.round(
     (Date.parse(a + "T12:00:00Z") - Date.parse(b + "T12:00:00Z")) / 86400000,
@@ -16,9 +16,9 @@ export const ramadanService = {
   config() {
     return session.ramadanPreview
       ? (session.ramadanPreviewConfig ??= structuredClone(
-          session.state.ramadan,
+          session.state.ramadanConfig,
         ))
-      : session.state.ramadan;
+      : session.state.ramadanConfig;
   },
   context(key = session.selectedDate || today(), preview = true) {
     const c = this.config(),
@@ -50,7 +50,7 @@ export const ramadanService = {
     }
     if (!virtual && c.mode === "on" && c.manualStart) {
       start = c.manualStart;
-      end = offsetDay(start, 30);
+      end = offsetDay(start, c.manualLength || 30);
       year = hijriService.get(start)?.year || h.year;
     }
     if (!virtual && c.mode === "off" && c.manualEnd) end = c.manualEnd;
@@ -88,14 +88,14 @@ export const ramadanService = {
         day: context.day,
       });
     const day = getDay(context.effective);
-    return (day.ramadan ??= { season: context.season, day: context.day });
+    return (day.ramadanV3 ??= { season: context.season, day: context.day });
   },
   days(context = this.context()) {
     const source = context.preview
       ? session.ramadanPreviewDays || {}
       : session.state.days;
     return Object.entries(source)
-      .map(([key, d]) => ({ key, ...(context.preview ? d : d.ramadan) }))
+      .map(([key, d]) => ({ key, ...(context.preview ? d : d.ramadanV3) }))
       .filter((d) => d.season === context.season)
       .sort((a, b) => a.key.localeCompare(b.key));
   },
@@ -103,9 +103,11 @@ export const ramadanService = {
     const ctx = this.context();
     if (!ctx.active) return false;
     const d = this.record(ctx);
+    d.planSnapshot ??= {goal:this.config().goal,dailyTargetEnabled:this.config().dailyTargetEnabled,dailyPages:this.config().dailyPages, completion:structuredClone(this.config().completion), nightGoals:this.config().nightGoals};
     d[field] = value;
-    if (field === "fasted" && value) d.notFasting = false;
+    if (field === "fasted" && value) {d.notFasting = false;d.makeUpNeeded=false;}
     if (field === "notFasting" && value) d.fasted = false;
+    if(field === "notFasting" && !value)d.makeUpNeeded=false;
     return ctx.preview || storage.save();
   },
   summary(ctx = this.context()) {
@@ -116,7 +118,7 @@ export const ramadanService = {
     for (const d of ds) {
       if (previous && span(d.key, previous) > 1) run = 0;
       if (d.fasted) run++;
-      else if (!d.notFasting) run = 0;
+      else if (!d.notFasting && !d.paused) run = 0;
       best = Math.max(best, run);
       previous = d.key;
     }
@@ -133,7 +135,27 @@ export const ramadanService = {
     };
   },
   planner(ctx = this.context()) {
-    const target = 604 * this.config().goal,
+    let c=this.config();
+    const snapshot=ctx.preview?null:session.state.days[ctx.effective]?.ramadanV3?.planSnapshot;
+    if(ctx.effective<today() && snapshot){
+      if(Array.isArray(snapshot)){
+        const target=snapshot.find(h=>h.id==='ramadan-quran')?.target;
+        if(target!=null)c={...c,dailyTargetEnabled:true,dailyPages:target,completion:{enabled:false}};
+      }else c={...c,...snapshot};
+    }
+    const completion=c.completion;
+    if(completion?.enabled && completion.deadline) {
+      const days=Math.max(1,span(completion.deadline,ctx.effective)+1);
+      const since=completion.setOn || ctx.effective;
+      const read=this.days(ctx).filter(d=>d.key>=since).reduce((n,d)=>n+(d.pages||0),0);
+      const remaining=Math.max(0,(+completion.pages||0)-read),perDay=Math.ceil(remaining/days);
+      return {target:+completion.pages||0,read,remaining,days,perDay,perPrayer:Math.ceil(perDay/5),behind:false};
+    }
+    if(c.dailyTargetEnabled){
+      const target=c.dailyPages*ctx.length,read=this.summary(ctx).pages,days=Math.max(1,ctx.length-(ctx.day||1)+1);
+      return {target,read,remaining:Math.max(0,target-read),days,perDay:c.dailyPages,perPrayer:Math.ceil(c.dailyPages/5),behind:read<c.dailyPages*Math.max(0,(ctx.day||1)-1)};
+    }
+    const target = 604 * c.goal,
       read = this.summary(ctx).pages;
     const remaining = Math.max(0, target - read),
       days = Math.max(1, ctx.length - (ctx.day || 1) + 1),
@@ -150,7 +172,7 @@ export const ramadanService = {
   },
   qada() {
     const missed = Object.values(session.state.days).filter(
-      (d) => d.ramadan?.notFasting,
+      (d) => d.ramadanV3?.makeUpNeeded,
     ).length;
     return {
       missed,
@@ -174,6 +196,16 @@ export const ramadanService = {
         : "";
     c.manualEnd = value === "off" ? today() : "";
     storage.save();
+  },
+  preparation(key=today()) {
+    const ctx=this.context(key,false),c=this.config();
+    if(!ctx.active)return [];
+    return [["Fajr","Suhoor preparation",c.suhoorMinutes],["Maghrib","Iftar preparation",c.iftarMinutes]].flatMap(([name,label,minutes])=>{
+      const p=prayerService.calculate(key).find(p=>p.name===name);if(!p)return [];
+      const date=new Date(+p.date-minutes*60000);
+      const time=new Intl.DateTimeFormat('en-GB',{timeZone:session.state.profile.tz,hour:'2-digit',minute:'2-digit',hour12:false}).format(date);
+      return [{id:'ramadan-'+name.toLowerCase()+'-prep',label,time,instant:date.toISOString(),ramadanPrep:true,note:'Personal preparation reminder'}];
+    });
   },
   countdowns(ctx = this.context()) {
     // Preview uses the virtual local date and a fixed local noon, never writes real days.

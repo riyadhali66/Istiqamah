@@ -1,8 +1,8 @@
-import { storage } from "./storage.js?v=1.2.0";
-import { session } from "./session.js?v=1.2.0";
-import { hijriService } from "./hijri.js?v=1.2.0";
-import { offsetDay, today } from "./dates.js?v=1.2.0";
-import { render } from "./ui/core.js?v=1.2.0";
+import { storage } from "./storage.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.0";
+import { hijriService } from "./hijri.js?v=2.1.0";
+import { offsetDay, today } from "./dates.js?v=2.1.0";
+import { render } from "./ui/core.js?v=2.1.0";
 
 function save() {
   storage.save();
@@ -25,6 +25,8 @@ function getDay(key = session.selectedDate) {
   d.values ??= {};
   d.journal ??= {};
   d.adhkar ??= {};
+  d.adhkarCounts ??= {};
+  d.earlierAdhkar ??= {};
   d.kids ??= {};
   d.snapshot ??= session.state.habits.map((h) => ({ ...h }));
   return d;
@@ -32,7 +34,7 @@ function getDay(key = session.selectedDate) {
 const dayHabits = (key) =>
   session.state.days[key]?.snapshot || session.state.habits;
 const isPaused = (h, d) =>
-  (h.fasting && d?.ramadan?.notFasting) ||
+  (h.fasting && (d?.ramadanV3?.notFasting || d?.ramadanV3?.paused)) ||
   (d?.pauseFaith && (h.prayer || h.fasting)) ||
   (h.fasting && d?.key && !hijriService.fasts(d.key).length);
 function score(key) {

@@ -1,5 +1,5 @@
-import { t } from "./i18n.js?v=1.2.0";
-import { session } from "./session.js?v=1.2.0";
+import { t } from "./i18n.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.0";
 
 const $ = (s) => document.querySelector(s),
   $$ = (s) => [...document.querySelectorAll(s)],

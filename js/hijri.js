@@ -1,5 +1,5 @@
-import { dateObj } from "./dates.js?v=1.2.0";
-import { session } from "./session.js?v=1.2.0";
+import { dateObj } from "./dates.js?v=2.1.0";
+import { session } from "./session.js?v=2.1.0";
 
 const hijriService = {
   get(key) {

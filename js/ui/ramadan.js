@@ -1,14 +1,18 @@
-import { prayerService } from "../prayer.js?v=1.2.0";
-import { session } from "../session.js?v=1.2.0";
-import { ramadanService as service } from "../ramadan.js?v=1.2.0";
-import { t } from "../i18n.js?v=1.2.0";
-import { esc, $, download, toast } from "../utils.js?v=1.2.0";
-import { modal, render } from "./core.js?v=1.2.0";
-import { today } from "../dates.js?v=1.2.0";
-import { storage } from "../storage.js?v=1.2.0";
+import { prayerService } from "../prayer.js?v=2.1.0";
+import { session } from "../session.js?v=2.1.0";
+import { ramadanService as service } from "../ramadan.js?v=2.1.0";
+import { t } from "../i18n.js?v=2.1.0";
+import { esc, $, download, toast } from "../utils.js?v=2.1.0";
+import { modal, render } from "./core.js?v=2.1.0";
+import { today } from "../dates.js?v=2.1.0";
+import { storage } from "../storage.js?v=2.1.0";
+const notifiedPreparation = new Set();
 const fields = [
   ["fasted", "Fasted"],
   ["notFasting", "Not fasting today"],
+  ["paused", "Pause tracking"],
+  ["charity", "Charity"], ["adhkar", "Adhkar"], ["family", "Family"],
+  ["makeUpNeeded", "I want to track a make-up fast"],
   ["suhoor", "Suhoor"],
   ["taraweeh", "Taraweeh"],
   ["dua", "Dua before iftar"],
@@ -50,14 +54,15 @@ export function ramadanHome() {
     night = service.night(ctx);
   return (
     preview +
-    `<section class="card ramadan-card" id="ramadan-home"><div class="row between wrap"><div><span class="eyebrow">${t("Ramadan")}</span><h2>${t("Day")} ${ctx.day} ${t("of 30")}</h2></div><button class="linkbtn" data-action="ramadan-setup">${t("Ramadan plan")}</button></div><p>${t("Dates follow Umm al-Qura; local moon sighting may differ.")}</p><div class="ramadan-countdowns">${service
+    `<section class="card ramadan-card" id="ramadan-home"><div class="row between wrap"><div><span class="eyebrow">${t("Ramadan")}</span><h2>${t("Day")} ${ctx.day} / ${ctx.length}</h2></div><button class="linkbtn" data-action="ramadan-setup">${t("Ramadan plan")}</button></div><p>${t("Dates follow Umm al-Qura; local moon sighting may differ.")} ${esc(c.manualStart || "")} · ${c.adjustment}</p><button class="linkbtn" data-action="ramadan-toggle">${t("Turn off Ramadan Mode")}</button><div class="ramadan-countdowns">${service
       .countdowns(ctx)
       .map(
         (item) =>
-          `<div><strong>${t(item.name === "Fajr" ? "Suhoor ends" : "Iftar")}</strong><output data-ramadan-countdown="${item.name}">${ctx.effective !== today() && !ctx.preview && item.date ? prayerService.format(item.date) : clock(item.seconds)}</output></div>`,
+          `<div><strong>${t(item.name === "Fajr" ? "Time remaining until Fajr" : "Time remaining until Maghrib")}</strong><small>${item.date ? prayerService.format(item.date) : ""}</small><output data-ramadan-countdown="${item.name}">${ctx.effective !== today() && !ctx.preview && item.date ? prayerService.format(item.date) : clock(item.seconds)}</output></div>`,
       )
       .join("")}</div>
- <div class="ramadan-checks">${fields.map(([key, label]) => control(key, label, d[key])).join("")}${number("pages", "Quran pages", d.pages)}${number("sadaqah", "Sadaqah", d.sadaqah, "0.01")}${night.lastTen ? control("nightPrayer", "Night prayer", d.nightPrayer) + control("itikaf", "I’tikaf", d.itikaf) : ""}</div><p>${t("Not fasting today is private and protects your fasting streak.")}</p>
+ <div class="ramadan-preparation"><h3>${t("Preparation reminders")}</h3><p>${t("Personal reminders, not religious deadlines. Fajr and Maghrib remain the prayer times.")}</p><p>${t("Suhoor preparation")}: ${c.suhoorMinutes} ${t("minutes before Fajr")} · ${t("Iftar preparation")}: ${c.iftarMinutes} ${t("minutes before Maghrib")}</p></div>
+ <div class="ramadan-checks">${fields.filter(([key])=>!["taraweeh","charity","adhkar","family"].includes(key)||c.goals[key]!==false).map(([key, label]) => control(key, label, d[key])).join("")}${number("pages", "Quran pages", d.pages)}<label>${t("Private reason (optional)")}<input data-ramadan="reason" maxlength="1000" value="${esc(d.reason || "")}"></label>${number("sadaqah", "Sadaqah", d.sadaqah, "0.01")}${night.lastTen ? control("nightPrayer", "Night prayer", d.nightPrayer) + control("itikaf", "I’tikaf", d.itikaf) : ""}</div><p>${t("Not fasting today is private and protects your fasting streak.")}</p>
  ${planner(ctx)}<p>${t("Daily sadaqah goal")}: ${c.dailySadaqah} · ${t("Taraweeh")}: ${t({ home: "At home", mosque: "At the mosque", skip: "Not this year" }[c.taraweeh])}</p>${night.lastTen ? nightCard(ctx) + fitr(ctx) : ""}<button class="btn gold section-gap" data-action="ramadan-details">${t("Ramadan tracker")}</button></section>`
   );
 }
@@ -68,7 +73,7 @@ function planner(ctx) {
 function nightCard(ctx) {
   const n = service.night(ctx),
     dua = window.SOURCE_DATA?.["ramadan-dua"];
-  return `<section class="ramadan-night ${n.odd ? "odd-night" : ""}"><h3>${t("Night")} ${n.number} · ${t(n.odd ? "An odd night — make room for dua." : "The last ten nights")}</h3><p>${t("Seek Laylat al-Qadr with a small, sincere act.")}</p>${dua ? `<p class="quote" lang="ar" dir="rtl">${esc(dua.ar)}</p>${session.lang === "en" ? `<p>${esc(dua.en)}</p>` : `<small>${t("Arabic source text")}</small>`}<p class="source"><a href="${dua.url}" target="_blank" rel="noopener noreferrer">${esc(dua.reference)}</a> · ${t("Grade")}: Sahih (Al-Albani); Hasan Sahih (Bashar Awad Maarouf). ${t("Source grading differs; see the full reference.")}</p>` : ""}</section>`;
+  return `<section class="ramadan-night ${n.odd ? "odd-night" : ""}"><h3>${t("Night")} ${n.number} · ${t(n.odd ? "An odd night — make room for dua." : "The last ten nights")}</h3><p>${t("Seek Laylat al-Qadr with a small, sincere act.")}</p><p>${esc(service.config().nightGoals || "")}</p>${dua ? `<p class="quote" lang="ar" dir="rtl">${esc(dua.ar)}</p>${session.lang === "en" ? `<p>${esc(dua.en)}</p>` : `<small>${t("Arabic source text")}</small>`}<p class="source"><a href="${dua.url}" target="_blank" rel="noopener noreferrer">${esc(dua.reference)}</a> · ${t("Grade")}: Sahih (Al-Albani); Hasan Sahih (Bashar Awad Maarouf). ${t("Source grading differs; see the full reference.")}</p>` : ""}</section>`;
 }
 function fitr(ctx) {
   if (!ctx.active || ctx.day < 21) return "";
@@ -90,11 +95,11 @@ export function ramadanDetails() {
     })
     .join(
       "",
-    )}</div><p>${s.fasted} ${t("Days fasted")} · ${s.pages} ${t("Quran pages")} · ${s.taraweeh} ${t("Taraweeh")}</p><button class="btn secondary section-gap" data-action="ramadan-print">${t("Print Ramadan tracker")}</button><div class="chartbox section-gap"><canvas id="ramadan-chart" role="img" aria-label="${t("Quran pages, fasting and taraweeh by day")}"></canvas></div></section><section class="card" id="qada-private"><h2>${t("Missed fasts — private")}</h2><p>${q.remaining} ${t("Make-up fasts remaining")} · ${q.paid} ${t("Make-ups logged")}</p><p>${t("Not fasting today adds one missed fast; changing the entry updates the balance. Check personal obligations with a qualified scholar.")}</p>${!ctx.active && !ctx.preview ? `<div class="row wrap"><button class="btn secondary" data-action="qada-done" ${q.remaining ? "" : "disabled"}>${t("Log a make-up fast")}</button><button class="linkbtn" data-action="qada-undo" ${q.paid ? "" : "disabled"}>${t("Undo make-up")}</button></div>` : ""}</section></div>`;
+    )}</div><p>${s.fasted} ${t("Days fasted")} · ${s.pages} ${t("Quran pages")} · ${s.taraweeh} ${t("Taraweeh")}</p><button class="btn secondary section-gap" data-action="ramadan-print">${t("Print Ramadan tracker")}</button><div class="chartbox section-gap"><canvas id="ramadan-chart" role="img" aria-label="${t("Quran pages, fasting and taraweeh by day")}"></canvas></div></section><section class="card" id="qada-private"><h2>${t("Missed fasts — private")}</h2><p>${q.remaining} ${t("Make-up fasts remaining")} · ${q.paid} ${t("Make-ups logged")}</p><p>${t("Only fasts you choose to track are included. Ask a qualified scholar about your circumstances.")}</p>${!ctx.active && !ctx.preview ? `<div class="row wrap"><button class="btn secondary" data-action="qada-done" ${q.remaining ? "" : "disabled"}>${t("Log a make-up fast")}</button><button class="linkbtn" data-action="qada-undo" ${q.paid ? "" : "disabled"}>${t("Undo make-up")}</button></div>` : ""}</section></div>`;
 }
 export function ramadanSettings() {
   const c = service.config();
-  return `<section class="card"><h2>${t("Ramadan")}</h2><label>${t("Ramadan started / ended")}<select id="ramadan-mode"><option value="auto" ${c.mode === "auto" ? "selected" : ""}>${t("Automatic")}</option><option value="on" ${c.mode === "on" ? "selected" : ""}>${t("Ramadan started")}</option><option value="off" ${c.mode === "off" ? "selected" : ""}>${t("Ramadan ended")}</option></select></label><label>${t("Moon-sighting adjustment")}<select id="ramadan-adjustment">${[-1, 0, 1].map((v) => `<option value="${v}" ${v === c.adjustment ? "selected" : ""}>${v > 0 ? "+" : ""}${v}</option>`).join("")}</select></label><p>${t("Dates follow Umm al-Qura; local moon sighting may differ.")}</p><button class="btn secondary" data-action="ramadan-setup">${t("Ramadan plan")}</button></section>`;
+  return `<section class="card"><h2>${t("Ramadan")}</h2><label>${t("Ramadan started / ended")}<select id="ramadan-mode"><option value="auto" ${c.mode === "auto" ? "selected" : ""}>${t("Automatic")}</option><option value="on" ${c.mode === "on" ? "selected" : ""}>${t("Ramadan started")}</option><option value="off" ${c.mode === "off" ? "selected" : ""}>${t("Ramadan ended")}</option></select></label><label>${t("Moon-sighting adjustment")}<select id="ramadan-adjustment">${[-1, 0, 1].map((v) => `<option value="${v}" ${v === c.adjustment ? "selected" : ""}>${v > 0 ? "+" : ""}${v}</option>`).join("")}</select></label><p>${t("Dates follow Umm al-Qura; local moon sighting may differ.")}</p><label>${t("Local Ramadan start date")}<input id="ramadan-start-date" type="date" value="${esc(c.manualStart)}"></label><label>${t("Locally announced month length")}<select data-ramadan-config="manualLength">${[29,30].map(n=>`<option value="${n}" ${c.manualLength===n?"selected":""}>${n}</option>`).join("")}</select></label><p>${t("Month length applies only to a local start date.")}</p><label>${t("Suhoor preparation")}<input data-ramadan-config="suhoorMinutes" type="number" min="0" max="180" value="${c.suhoorMinutes}"></label><label>${t("Iftar preparation")}<input data-ramadan-config="iftarMinutes" type="number" min="0" max="180" value="${c.iftarMinutes}"></label><label class="inline-check"><input type="checkbox" data-ramadan-config="dailyTargetEnabled" ${c.dailyTargetEnabled?'checked':''}>${t("Daily Quran pages")}</label><label>${t("Daily Quran pages")}<input type="number" data-ramadan-config="dailyPages" min="0" max="1000000" value="${c.dailyPages}"></label>${['taraweeh','charity','adhkar','family'].map(k=>`<label class="inline-check"><input type="checkbox" data-ramadan-goal="${k}" ${c.goals[k]!==false?'checked':''}>${t({taraweeh:'Taraweeh',charity:'Charity',adhkar:'Adhkar',family:'Family'}[k])}</label>`).join('')}<h3>${t("Quran completion plan")}</h3><label><input data-completion="enabled" type="checkbox" ${c.completion.enabled?'checked':''}>${t("Enable completion plan")}</label><label>${t("Remaining pages as of today")}<input data-completion="pages" type="number" min="0" max="1000000" value="${c.completion.pages}"></label><label>${t("Intended completion date")}<input data-completion="deadline" type="date" value="${esc(c.completion.deadline)}"></label><label>${t("Optional worship goals")}<textarea data-ramadan-config="nightGoals" maxlength="1000">${esc(c.nightGoals)}</textarea></label><button class="btn secondary" data-action="ramadan-setup">${t("Ramadan plan")}</button></section>`;
 }
 export function ramadanPreviewControl() {
   return `<details class="section-gap"><summary>${t("Developer preview")}</summary><label>${t("Preview Ramadan")}<select id="ramadan-preview"><option value="off">${t("Off")}</option>${[1, 21, 30, 31, 32].map((day) => `<option value="${day}">${day <= 30 ? t("Day") + " " + day : day === 31 ? t("Eid Mubarak") : t("Shawwal")}</option>`).join("")}</select></label><p>${t("Ramadan preview — practice records stay separate.")}</p></details>`;
@@ -130,6 +135,7 @@ export function showRamadanSetup(step = 0) {
 export function advanceSetup() {
   if (!setupStep) {
     setupDraft.goal = Number($("#ramadan-goal").value);
+    setupDraft.dailyTargetEnabled=false;
     setupDraft.taraweeh = $("#ramadan-taraweeh").value;
     showRamadanSetup(1);
     return;
@@ -153,6 +159,15 @@ export function advanceSetup() {
 export function ramadanTick() {
   const ctx = service.context();
   if (!ctx.active) return;
+  if(!ctx.preview && session.state.settings.reminders){
+    for(const block of service.preparation(today())){
+      const delta=Date.now()-Date.parse(block.instant);
+      if(delta>=0 && delta<60000 && !notifiedPreparation.has(block.instant)){
+        notifiedPreparation.add(block.instant);toast(t(block.label));
+        if('Notification' in window && Notification.permission==='granted')new Notification(t(block.label),{body:t('Personal preparation reminder')});
+      }
+    }
+  }
   for (const item of service.countdowns(ctx)) {
     const el = document.querySelector(
       `[data-ramadan-countdown="${item.name}"]`,
