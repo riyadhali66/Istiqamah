@@ -1,8 +1,8 @@
 'use strict';
-const CACHE = 'istiqamah-v1-20261105-e';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './vendor/adhan.js', './vendor/arabic-core.js', './vendor/chart.js', './vendor/inter.woff2', './vendor/amiri.woff2', './vendor/uthmani.woff2', './data/content.js', './data/adhan-makkah.mp3', './data/adhan-mishary.mp3'];
+const CACHE = 'istiqamah-v2-20261108-a';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './vendor/adhan.js', './vendor/arabic-core.js', './vendor/chart.js', './vendor/inter.woff2', './vendor/amiri.woff2', './vendor/uthmani.woff2', './data/content.js?v=2.0.0', './data/adhkar-library.js?v=2.0.0', './phase2.js?v=2.0.0', './phase2.css?v=2.0.0', './data/adhan-makkah.mp3', './data/adhan-mishary.mp3'];
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL.map(url => new Request(url, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('istiqamah-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
@@ -18,7 +18,7 @@ self.addEventListener('fetch', event => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5000);
         try {
-          const response = await fetch(request, { cache: 'no-cache', signal: controller.signal });
+          const response = await fetch(request.url, { cache: 'reload', credentials: 'same-origin', signal: controller.signal });
           if (!response.ok) throw new Error('Page unavailable');
           await cache.put('./index.html', response.clone());
           return response;
