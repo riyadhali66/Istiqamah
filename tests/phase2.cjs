@@ -9,7 +9,7 @@ const port=Number(process.env.PHASE2_TEST_PORT||8766),base=`http://127.0.0.1:${p
 const server=spawn('python3',['-m','http.server',String(port),'--bind','127.0.0.1'],{cwd:path.resolve(__dirname,'..'),stdio:'ignore'});
 let browser,count=0;
 const check=async(name,run)=>{await run();console.log(`PASS Phase 2 ${++count}: ${name}`)};
-const nav=async(page,id)=>page.locator(`[data-action="nav"][data-id="${id}"]`).first().click();
+const nav=async(page,id)=>{await page.locator(`[data-action="nav"][data-id="${id}"]`).first().click();await page.waitForFunction(id=>document.querySelector('.navbtn.active')?.dataset.id===id,id)};
 const tool=async(page,id)=>{await nav(page,'tools');await page.locator(`[data-action="tool"][data-id="${id}"]`).click()};
 (async()=>{
   for(let i=0;i<50;i++){try{if((await fetch(base)).ok)break}catch{}await new Promise(r=>setTimeout(r,100))}
@@ -17,9 +17,9 @@ const tool=async(page,id)=>{await nav(page,'tools');await page.locator(`[data-ac
   const context=await browser.newContext({viewport:{width:1440,height:1000},timezoneId:'Asia/Dubai',acceptDownloads:true});
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.clock.install({time:new Date('2027-03-01T08:00:00Z')});
-  await page.goto(base);await page.locator('[data-draft="name"]').fill('Amina');await page.locator('[data-draft="gender"]').selectOption('Female');await page.locator('[data-draft="city"]').fill('Dubai');await page.locator('[data-draft="city"]').blur();await page.locator('[data-action="skip-wizard"]').click();await page.locator('[data-action="finish-wizard"]').click();
+  await page.goto(base);await page.waitForFunction(()=>!!window.Istiqamah);await page.locator('[data-draft="name"]').fill('Amina');await page.locator('[data-draft="gender"]').selectOption('Female');await page.locator('[data-draft="city"]').fill('Dubai');await page.locator('[data-draft="city"]').blur();await page.locator('[data-action="skip-wizard"]').click();await page.locator('[data-action="finish-wizard"]').click();
   await check('stable IDs and original-source checksums for 113 entries in 10 categories',async()=>{
-    const entries=await page.evaluate(()=>ADHKAR_LIBRARY.entries);
+    const entries=await page.evaluate(()=>Istiqamah.adhkarData.entries);
     assert.equal(entries.length,113);assert.equal(new Set(entries.map(e=>e.id)).size,113);assert.equal(new Set(entries.map(e=>e.category)).size,10);
     assert.equal(entries.filter(e=>e.count===null).length,52);
     for(const e of entries){const hash=crypto.createHash('sha256').update(e.sourceCategory+'\0'+e.text+'\0'+e.reference).digest('hex');assert.equal(e.id,'azkar-'+hash.slice(0,20));assert.equal(e.provenance.rowSha256,hash);assert.deepEqual(e.translations,{})}
@@ -27,7 +27,7 @@ const tool=async(page,id)=>{await nav(page,'tools');await page.locator(`[data-ac
   await check('legacy backups migrate positional counters and selected dhikr without losing history',async()=>{
     const old=await page.evaluate(()=>{const a=Istiqamah,s=JSON.parse(JSON.stringify(a.state));delete s.phase2;s.tasbih={count:27,goal:33,selected:'morning-1'};const d=s.days[a.today()];d.adhkar={'morning-1':2,'evening-0':1};d.values['prayer-Fajr']=1;d.journal.well='Keep my old journal';return s});
     assert(await page.evaluate(s=>Istiqamah.validate(s),old));
-    await page.evaluate(s=>localStorage.setItem('istiqamah.v1',JSON.stringify(s)),old);await page.reload();
+    await page.evaluate(s=>localStorage.setItem('istiqamah.v1',JSON.stringify(s)),old);await page.reload();await page.waitForFunction(()=>!!window.Istiqamah);
     const result=await page.evaluate(()=>{const a=Istiqamah,id=a.adhkarLibrary.aliases.get('morning-1');return {id,selected:a.state.tasbih.selected,count:a.getDay().adhkar[id],free:a.state.tasbih.count,journal:a.getDay().journal.well,prayer:a.getDay().values['prayer-Fajr'],schema:a.state.phase2.schemaVersion}});
     assert.equal(result.selected,result.id);assert.equal(result.count,2);assert.equal(result.free,27);assert.equal(result.journal,'Keep my old journal');assert.equal(result.prayer,1);assert.equal(result.schema,2);
   });
@@ -45,10 +45,10 @@ const tool=async(page,id)=>{await nav(page,'tools');await page.locator(`[data-ac
     await page.locator('#dhikr-personal-target').fill('5');await page.locator('#dhikr-personal-target').blur();
     await page.locator('[data-action="tasbih"]').click();await page.locator('[data-action="tasbih"]').click();assert.equal(await page.locator('.tasbih-button').innerText(),'2');
     const selected=await page.locator('#tasbih-adhkar').inputValue();await page.locator('[data-action="tasbih-next"]').click();assert.equal(await page.locator('.tasbih-button').innerText(),'0');await page.locator('#tasbih-adhkar').selectOption(selected);assert.equal(await page.locator('.tasbih-button').innerText(),'2');
-    await page.locator('[data-action="tasbih-reset"]').click();await page.evaluate(()=>Phase2.migrate(Istiqamah.state));assert.equal(await page.locator('.tasbih-button').innerText(),'0');
+    await page.locator('[data-action="tasbih-reset"]').click();await page.evaluate(()=>Istiqamah.phase2.migrate(Istiqamah.state));assert.equal(await page.locator('.tasbih-button').innerText(),'0');
   });
   await check('Ramadan calendar uses Umm al-Qura, supports local adjustments and both month lengths',async()=>{
-    const r=await page.evaluate(()=>{const a=Istiqamah,c=a.state.phase2.ramadan;c.startDate='';const first=a.ramadanService.season('2024-03-11'),last=a.ramadanService.season('2024-04-09'),outside=a.ramadanService.season('2024-04-10');c.startDate='2024-03-12';c.length=29;return {first,last,outside,adjusted:a.ramadanService.season('2024-03-12'),before:a.ramadanService.season('2024-03-11'),end:a.ramadanService.season('2024-04-09'),after:a.ramadanService.season('2024-04-10'),invalid:Phase2.validDate('2027-02-31')}});
+    const r=await page.evaluate(()=>{const a=Istiqamah,c=a.state.phase2.ramadan;c.startDate='';const first=a.ramadanService.season('2024-03-11'),last=a.ramadanService.season('2024-04-09'),outside=a.ramadanService.season('2024-04-10');c.startDate='2024-03-12';c.length=29;return {first,last,outside,adjusted:a.ramadanService.season('2024-03-12'),before:a.ramadanService.season('2024-03-11'),end:a.ramadanService.season('2024-04-09'),after:a.ramadanService.season('2024-04-10'),invalid:Istiqamah.phase2.validDate('2027-02-31')}});
     assert.equal(r.first.day,1);assert.equal(r.last.day,30);assert.equal(r.outside.inRamadan,false);assert.equal(r.adjusted.adjustment,1);assert.equal(r.before.inRamadan,false);assert.equal(r.end.day,29);assert.equal(r.after.inRamadan,false);assert.equal(r.invalid,false);
   });
   await check('Ramadan settings enable a separate overlay without changing the ordinary habit plan',async()=>{
@@ -87,47 +87,22 @@ const tool=async(page,id)=>{await nav(page,'tools');await page.locator(`[data-ac
   await check('last ten nights show optional goals and preserve them privately',async()=>{
     await page.evaluate(()=>{const a=Istiqamah;a.state.phase2.ramadan.length=29;a.state.phase2.ramadan.startDate=a.offsetDay(a.today(),-19);a.ramadanService.ensure(a.today(),true);a.render()});assert.equal(await page.locator('.last-ten').count(),0);
     await page.evaluate(()=>{const a=Istiqamah;a.state.phase2.ramadan.startDate=a.offsetDay(a.today(),-20);a.ramadanService.ensure(a.today(),true);a.render()});
-    assert(await page.locator('.last-ten').isVisible());await page.locator('#ramadan-night-goals').fill('A quiet reading session');await page.reload();assert.equal(await page.locator('#ramadan-night-goals').inputValue(),'A quiet reading session');
+    assert(await page.locator('.last-ten').isVisible());await page.locator('#ramadan-night-goals').fill('A quiet reading session');await page.reload();await page.waitForFunction(()=>!!window.Istiqamah);assert.equal(await page.locator('#ramadan-night-goals').inputValue(),'A quiet reading session');
   });
   await check('backups include new records, reject malformed Ramadan data, and support confirmed restore',async()=>{
     await nav(page,'settings');const event=page.waitForEvent('download');await page.locator('[data-action="backup"]').click();const file=await event,data=JSON.parse(fs.readFileSync(await file.path(),'utf8'));assert.equal(data.phase2.schemaVersion,2);assert(data.days['2027-03-01'].ramadan);assert(await page.evaluate(s=>Istiqamah.validate(s),data));const broken=structuredClone(data);broken.phase2.ramadan.startDate='2027-02-31';assert.equal(await page.evaluate(s=>Istiqamah.validate(s),broken),false);
-    await page.locator('#import-file').setInputFiles({name:'phase2.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await page.locator('#confirm-import').click();assert.equal(await page.evaluate(()=>Istiqamah.getDay().ramadan.reason),'Private note only');
+    await page.locator('#import-file').setInputFiles({name:'phase2.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await page.locator('#confirm-import').click();await page.locator('#modal').waitFor({state:'hidden'});assert.equal(await page.evaluate(()=>Istiqamah.getDay().ramadan.reason),'Private note only');
     const unsafe=structuredClone(data);unsafe.days['2027-03-01'].ramadan.snapshot.find(h=>!h.fasting).label='<img src=x onerror=alert(1)>';
-    await page.locator('#import-file').setInputFiles({name:'escaped-label.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(unsafe))});await page.locator('#confirm-import').click();await nav(page,'today');assert.equal(await page.locator('.ramadan-dashboard img').count(),0);assert((await page.locator('.ramadan-dashboard').innerText()).includes('<img src=x'));
-    await nav(page,'settings');await page.locator('#import-file').setInputFiles({name:'restore.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await page.locator('#confirm-import').click();
+    await page.locator('#import-file').setInputFiles({name:'escaped-label.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(unsafe))});await page.locator('#confirm-import').click();await page.locator('#modal').waitFor({state:'hidden'});await nav(page,'today');assert.equal(await page.locator('.ramadan-dashboard img').count(),0);assert((await page.locator('.ramadan-dashboard').innerText()).includes('<img src=x'));
+    await nav(page,'settings');await page.locator('#import-file').setInputFiles({name:'restore.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await page.locator('#confirm-import').click();await page.locator('#modal').waitFor({state:'hidden'});
   });
   await check('all five languages, dark mode, full source text and mobile layouts',async()=>{
-    for(const language of ['en','ar','ur','ml','hi']){await nav(page,'settings');await page.locator('[data-profile="language"]').selectOption(language);await page.setViewportSize({width:390,height:844});await nav(page,'today');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);if(['ml','hi'].includes(language))assert((await page.locator('.inspiration .source').innerText()).includes('Abdel Haleem'));await tool(page,'tasbih');const longest=await page.evaluate(()=>ADHKAR_LIBRARY.entries.reduce((a,b)=>a.text.length>b.text.length?a:b).id);await page.locator('#adhkar-category').selectOption('all');await page.locator('#tasbih-adhkar').selectOption(longest);const r=await page.locator('.selected-dhikr .quote').evaluate(el=>({height:el.clientHeight,scroll:el.scrollHeight,style:getComputedStyle(el).maxHeight}));assert.equal(r.style,'none');assert(r.height+1>=r.scroll);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)}
+    for(const language of ['en','ar','ur','ml','hi']){await nav(page,'settings');await page.locator('[data-profile="language"]').selectOption(language);await page.setViewportSize({width:390,height:844});await nav(page,'today');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);if(['ml','hi'].includes(language)){const q=await page.locator('.inspiration .quran').innerText();assert(q.length>0)}await tool(page,'tasbih');const longest=await page.evaluate(()=>Istiqamah.adhkarData.entries.reduce((a,b)=>a.text.length>b.text.length?a:b).id);await page.locator('#adhkar-category').selectOption('all');await page.locator('#tasbih-adhkar').selectOption(longest);const r=await page.locator('.selected-dhikr .quote').evaluate(el=>({height:el.clientHeight,scroll:el.scrollHeight,style:getComputedStyle(el).maxHeight}));assert.equal(r.style,'none');assert(r.height+1>=r.scroll);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)}
     await nav(page,'settings');await page.locator('#theme-select').selectOption('dark');await nav(page,'today');assert.equal(await page.locator('html').getAttribute('data-theme'),'dark');await page.screenshot({path:path.join(__dirname,'../test-results/ramadan-mobile.png')});
     await nav(page,'settings');await page.locator('[data-profile="language"]').selectOption('en');await page.locator('#theme-select').selectOption('light');await page.setViewportSize({width:1440,height:1000});await nav(page,'today');await page.screenshot({path:path.join(__dirname,'../test-results/ramadan-desktop.png')});
   });
-  await check('actual v1 cached app upgrades to v2 and stays usable offline without data loss',async()=>{
-    const fixture=JSON.parse(require('node:zlib').gunzipSync(fs.readFileSync(path.join(__dirname,'fixtures/v1-app.json.gz'))));
-    const folder=fs.mkdtempSync(path.join(require('node:os').tmpdir(),'istiqamah-upgrade-'));
-    const root=path.resolve(__dirname,'..');
-    for(const name of ['vendor','data','phase2.js','phase2.css','manifest.webmanifest','icon.svg','icon-192.png','icon-512.png'])fs.cpSync(path.join(root,name),path.join(folder,name),{recursive:true});
-    fs.writeFileSync(path.join(folder,'index.html'),fixture['index.html']);fs.writeFileSync(path.join(folder,'sw.js'),fixture['sw.js']);
-    const upgradePort=port+1,url=`http://127.0.0.1:${upgradePort}`;
-    const service=spawn('python3',['-m','http.server',String(upgradePort),'--bind','127.0.0.1'],{cwd:folder,stdio:'ignore'});
-    const upgrade=await browser.newContext({timezoneId:'Asia/Dubai'}),client=await upgrade.newPage();
-    try{
-      for(let i=0;i<50;i++){try{if((await fetch(url)).ok)break}catch{}await new Promise(r=>setTimeout(r,100))}
-      await client.goto(url);await client.locator('[data-draft="name"]').fill('Preserved user');await client.locator('[data-action="skip-wizard"]').click();await client.locator('[data-action="finish-wizard"]').click();
-      await client.evaluate(()=>{Istiqamah.state.tasbih.count=19;Istiqamah.state.tasbih.selected='morning-1';Istiqamah.getDay().adhkar['morning-1']=2;Istiqamah.getDay().journal.well='Before the upgrade';Istiqamah.storage.save()});
-      await client.evaluate(async()=>{await navigator.serviceWorker.ready});await client.reload();await client.waitForFunction(()=>!!navigator.serviceWorker.controller);
-      await upgrade.setOffline(true);await client.reload();assert.equal(await client.evaluate(()=>typeof window.Phase2),'undefined');await upgrade.setOffline(false);
-      fs.copyFileSync(path.join(root,'index.html'),path.join(folder,'index.html'));fs.copyFileSync(path.join(root,'sw.js'),path.join(folder,'sw.js'));
-      await client.evaluate(async()=>{window.previousWorker=navigator.serviceWorker.controller;const registration=await navigator.serviceWorker.getRegistration();await registration.update()});
-      await client.waitForFunction(async()=> (await caches.keys()).some(key=>key.startsWith('istiqamah-v2-')));
-      // Control transfer and successful online/offline reloads establish readiness.
-      await client.waitForFunction(()=>navigator.serviceWorker.controller!==window.previousWorker);
-      await client.reload();await client.waitForFunction(()=>!!window.Phase2);await tool(client,'tasbih');
-      assert.equal(await client.evaluate(()=>Phase2.VERSION),'2.0.0');assert.equal(await client.locator('.tasbih-button').innerText(),'2');assert.equal(await client.evaluate(()=>Istiqamah.state.tasbih.count),19);assert.equal(await client.evaluate(()=>Istiqamah.getDay().journal.well),'Before the upgrade');
-      await upgrade.setOffline(true);await client.reload();await tool(client,'tasbih');assert.equal(await client.locator('.tasbih-button').innerText(),'2');assert.equal(await client.evaluate(()=>ADHKAR_LIBRARY.entries.length),113);
-    }finally{await upgrade.close();service.kill();fs.rmSync(folder,{recursive:true,force:true})}
-  });
   await check('new library and Ramadan dashboard work offline with persisted data',async()=>{
-    await page.evaluate(async()=>{await navigator.serviceWorker.ready});await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);await context.setOffline(true);await page.reload();assert(await page.locator('.ramadan-dashboard').isVisible());await tool(page,'tasbih');assert.equal(await page.evaluate(()=>ADHKAR_LIBRARY.entries.length),113);const before=await page.evaluate(()=>Istiqamah.state.tasbih.count);await page.locator('#tasbih-adhkar').selectOption('');await page.locator('[data-action="tasbih"]').click();await page.reload();assert.equal(await page.evaluate(()=>Istiqamah.state.tasbih.count),before+1);await context.setOffline(false);
+    await page.evaluate(async()=>{await navigator.serviceWorker.ready});await page.reload();await page.waitForFunction(()=>!!window.Istiqamah);await page.waitForFunction(()=>!!navigator.serviceWorker.controller);await context.setOffline(true);await page.reload();await page.waitForFunction(()=>!!window.Istiqamah);assert(await page.locator('.ramadan-dashboard').isVisible());await tool(page,'tasbih');assert.equal(await page.evaluate(()=>Istiqamah.adhkarData.entries.length),113);const before=await page.evaluate(()=>Istiqamah.state.tasbih.count);await page.locator('#tasbih-adhkar').selectOption('');await page.locator('[data-action="tasbih"]').click();await page.reload();await page.waitForFunction(()=>!!window.Istiqamah);assert.equal(await page.evaluate(()=>Istiqamah.state.tasbih.count),before+1);await context.setOffline(false);
   });
   await check('no runtime exceptions in Phase 2 workflows',async()=>assert.deepEqual(errors,[]));
   console.log(`\n${count} Phase 2 browser checks passed.`);

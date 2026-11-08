@@ -2,11 +2,13 @@
 
 **Small deeds. Every day. Limitless results.**
 
+**2.1.0 — combined Phase 1 + Phase 2.** This branch replaces PR #2 on top of current main; it does not deploy or change main until reviewed and merged.
+
 ### 🌐 Try it now: **[riyadhali66.github.io/Istiqamah](https://riyadhali66.github.io/Istiqamah/)**
 
 Free, with no login and no ads. Works offline after the first visit. Available in English, العربية, اردو, മലയാളം and हिन्दी.
 
-A private, local-first Muslim life companion. The original application and service structure remain in `index.html`; `phase2.js` and `phase2.css` add Ramadan and library services. Small companion files provide installable PWA support, local fonts, libraries, and attributed offline religious content. No login, application backend, AI API, build step, or runtime package installation is required.
+A private, local-first Muslim life companion. The entry HTML, readable ES modules in `js/`, and styles in `css/app.css` have no build step. Small companion files provide installable PWA support, local fonts, libraries, and attributed offline religious content. No login, application backend, AI API, build step, or runtime package installation is required.
 
 ## 🤝 Help improve Istiqamah
 
@@ -16,10 +18,14 @@ Istiqamah is free and open source. We hope it becomes sadaqah jariyah for everyo
 - **Check the religious content:** report any wrong reference, grade or count with your source. These reports get top priority.
 - **Translate:** improve the Arabic, Urdu, Malayalam or Hindi text, or add a new language.
 - **Test on your phone:** Android and iPhone reports with screenshots help a lot.
-- **Write code:** fix bugs, improve accessibility, or help with future accounts, cloud sync, and push notifications.
+- **Write code:** fix bugs, improve accessibility, or help with future accounts, cloud sync and push notifications.
 - **Star ⭐ the repository and share it** with someone who could benefit.
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. JazakAllahu khairan 🤲
+
+## Review this combined branch
+
+This PR branch is `integrate-phase1-phase2-2.1`. Before merge, download [this branch ZIP](https://github.com/riyadhali66/Istiqamah/archive/refs/heads/integrate-phase1-phase2-2.1.zip), not the older main ZIP. Serve the entire extracted directory over HTTP/HTTPS and confirm version **2.1.0**. The live site remains on main until this replacement PR is reviewed and merged.
 
 ## Open it
 
@@ -31,7 +37,7 @@ python3 -m http.server 8000
 
 Open `http://localhost:8000` on the same computer. Alternatively, serve this directory with any static web server. Use HTTPS for a phone or a deployed site. Do not open a development server to the public Internet.
 
-You can also open `index.html` directly for the basic app. Service workers and phone installation require HTTPS or localhost. Browser storage is scoped to the address you open; export and import a backup when moving between file, localhost, and a deployed address.
+ES modules require a static HTTP server; direct `file://` opening is no longer supported. Service workers, encryption and phone installation require HTTPS or localhost. Browser storage is scoped to the address you open; export and import a backup when moving between file, localhost, and a deployed address.
 
 ## Update an existing localhost copy
 
@@ -51,7 +57,7 @@ Stay online the first time you open it, so the offline cache can finish. After t
 
 To host your own copy, serve the **entire directory**, including `vendor/` and `data/`, from any HTTPS static host.
 
-After installation, reopen it from the home screen. The app, prayer calculations, Hijri calendar, charts, all bundled readings, and both adhan recordings work offline. Verse recitation streams from EveryAyah when first played and is cached when the browser permits. External commentary links need a connection.
+After installation, reopen it from the home screen. The app, prayer calculations, Hijri calendar, charts and all licensed bundled readings work offline. All 113 permitted Azkar DB entries are bundled. The two adhan recordings and Uthmani font remain absent from the distribution and install cache; they are separate credited, hash-verified Settings downloads. The default font is the bundled SIL OFL Amiri. Removing optional downloads retains all bundled adhkar and saved counters. Verse recitation streams from EveryAyah when first played and is cached when the browser permits. External commentary links need a connection.
 
 ## Save the tracker as a PDF
 
@@ -87,23 +93,25 @@ All 113 texts are copied verbatim from the inspected Azkar DB source, with origi
 
 Daily counts use content-derived stable IDs, not array positions. Next/previous uses the current filtered list. Reset affects only the selected entry. Morning/evening entries share their counts with Reflections, and free counting remains independent. Entries outside the active filter can stay selected without losing their counts.
 
-### Existing data and backup migration
+### One migration chain and recovery
 
-The storage key remains **`istiqamah.v1`**, and the outer backup `version: 1` remains readable. An additive `phase2.schemaVersion: 2` section holds new settings, favorites, and personal goals. Existing profile fields, ordinary habits, day snapshots, debts, words, children, notes, and free-counter values are retained.
+The authoritative key stays `istiqamah.v1`. The pipeline is **legacy → outer `schemaVersion: 1` → additive `phase2.schemaVersion: 2` records**. `js/storage.js` alone controls persistence. `js/phase2-state.js` supplies pure transforms and validation; feature initialization never performs a second migration or writes around storage's guards.
 
-Every old `morning-N` / `evening-N` counter is mapped through the bundled legacy manifest to its stable ID. Compatibility aliases are retained and synchronized; an existing stable count—including zero after a reset—takes precedence so repeated migrations cannot resurrect a cleared count. The selected old dhikr is migrated too. Ramadan day records add a separate `ramadan` snapshot and `ramadan-*` value IDs. Historical regular snapshots are never replaced with the overlay.
+Before *either* transform runs, `storage.load()` validates the old structure and durably saves its **exact original bytes**. The first copy is `istiqamah.migration.v1`; it is read back and verified. If an earlier original is already present, the current original bytes must be committed and read back from a separate IndexedDB checkpoint. A thrown write, silent no-op, blocked/unavailable IndexedDB, or a stale concurrent active record prevents the upgrade. Recovery blocks ordinary saves and never replaces unreadable/future-schema data with onboarding defaults.
 
-New backups preserve these additions, and old backups are accepted and migrated after validation. Downgrading a v2 backup into an old app is not supported: keep an exported v1 backup if you need an old-version fallback. Backups remain unencrypted local files.
+The chain accepts legacy state from `964ba52`, Phase 1 schema-1 state, and Phase 2 state from `fd79768`, including Ramadan snapshots, notes, favorites, stable IDs, and positional counters. Positional keys and selected dhikr IDs are mapped through the existing 61-entry manifest. Stable counts, including zero, take precedence; compatibility aliases remain synchronized. Pure migration and repeated loads are idempotent. Existing regular-plan snapshots remain separate from Ramadan snapshots.
+
+Phase 1's stale-tab comparison, encrypted backups and **seven IndexedDB daily copies** remain. Plain and encrypted file imports validate/authenticate first, retain the current exact undo bytes and imported original bytes, then migrate and replace only after all required copies succeed. Passphrases and derived keys are never persisted. The encrypted envelope and exact decrypted JSON can be retained as separate local import checkpoints; local copies remain unencrypted unless the checkpoint itself is an encrypted envelope. Original/undo copies are available through the recovery UI.
 
 ### Update a downloaded copy safely
 
 1. In the currently working app, **Settings → Export backup**.
-2. Download the latest GitHub ZIP (or run `git pull`). Extract/copy the **entire** app: include `phase2.js`, `phase2.css`, `sw.js`, and both `data/` and `vendor/` directories. Replacing only `index.html` is insufficient.
+2. Download the latest GitHub ZIP (or run `git pull`). Extract/copy the **entire** app: include `index.html`, `sw.js`, and the complete `js/`, `css/`, `data/`, and `vendor/` directories. Replacing only `index.html` is insufficient.
 3. Stop the old static server and start it from the updated directory using the same address, port, and browser profile. For the previous setup, reopen exactly **`http://localhost:8000/`**.
-4. Reload, allow the updated worker to activate, and reload again if needed. **Settings → Install app → Check for updates** also checks and reloads. Confirm **Istiqamah 2.0.0** in the footer or Ramadan settings badge.
+4. Reload, allow the updated worker to activate, and reload again if needed. **Settings → Install app → Check for updates** also checks and reloads. Confirm **Istiqamah 2.1.0** in the footer or Ramadan settings badge.
 5. Do **not** clear site data. If you move to another address, port, device, or a different direct-file location, import the exported backup in that new origin.
 
-On Windows without Python, the basic app can be opened by double-clicking the newly extracted `index.html`; use HTTPS hosting for installable offline PWA behavior. The existing hosted site can be used without installing Python. Its deployment must finish before it can show the new version.
+This combined version uses ES modules and needs HTTP/HTTPS; direct `file://` opening is not supported. On Windows use `py -m http.server 8000` if the Python launcher is installed, or use the hosted site after this PR is merged/deployed. The existing hosted site can be used without installing Python. Its deployment must finish before it can show the new version.
 
 New feature assets carry versioned URLs, and installation fetches fresh shell files. The worker prefers fresh online HTML and retains an offline fallback. Future code/data releases must increment both the asset URL version and service-worker cache version when those assets change.
 
@@ -116,15 +124,15 @@ New feature assets carry versioned URLs, and installation fetches fresh shell fi
 - Editable, addable, removable habits; reorder controls; historical habit snapshots; editable schedule block labels and times, additional blocks, and removal. Schedule order follows the selected times; prayer blocks continue to follow actual prayer calculations.
 - Multiple months, a real calendar-length heatmap, five weekly summaries, line/radar/mood-sleep charts, milestones, monthly reviews, and next-month goals. Empty history is shown as empty rather than simulated achievements. Week 5 includes all remaining days after day 28.
 - Debt balances, payment histories with overpayment checks, savings goals, gold-based nisab and zakat estimates.
-- Tasbih with a searchable ten-category adhkar picker, favorites, complete Arabic source text and references, source repetition targets when explicitly provided, optional personal goals when no count field exists, next/previous navigation, and stable-ID daily counts shared with Reflections; free counting retains 33/100 milestones, optional vibration and a linked faith habit; morning/evening adhkar with original repeat counts; fasting calendar, White Days, Ashura, Arafah, six Shawwal days, and next-day fasting prompts. Eid days and the days of Tashriq cannot be marked through the optional fasting calendar; Ramadan does not receive voluntary-fasting suggestions. Local moon-sighting dates can differ from Umm al-Qura. Arafah advice is for non-pilgrims; consult a scholar about your own circumstances.
+- Tasbih with a morning/evening adhkar picker, complete Arabic source text and references, automatic source repetition targets, next-dhikr navigation, and daily counts shared with Reflections; free counting retains 33/100 milestones, optional vibration and a linked faith habit; morning/evening adhkar with original repeat counts; fasting calendar, White Days, Ashura, Arafah, six Shawwal days, and next-day fasting prompts. Eid days and the days of Tashriq cannot be marked through the optional fasting calendar; Ramadan does not receive voluntary-fasting suggestions. Local moon-sighting dates can differ from Umm al-Qura. Arafah advice is for non-pilgrims; consult a scholar about your own circumstances.
 - Individual child star charts, Quran minutes, and parent-set rewards; word log and reveal/review cards; a 25-minute focus timer; calendar exports for one or seven days with UTC timestamps and five-minute reminders.
-- JSON backup export, validated import with confirmation before replacement, plan regeneration, re-onboarding, light/dark themes, installable offline shell, and a dedicated print layout.
+- Plain JSON and optional encrypted backup export, validated legacy/encrypted import with confirmation and an undo copy before replacement, seven daily local safety copies, plan regeneration, re-onboarding, light/dark themes, installable offline shell, and a dedicated print layout.
 
 ## Religious content and exact boundaries
 
-Religious text is copied from the requested source datasets, never generated. `data/content.js` bundles 15 curated Quran references in Arabic, English (Abdel Haleem), and Urdu (Fateh Muhammad Jalandhry); 60 thematic Sunan Abi Dawud references with explicit **Sahih or Hasan** source grades and grader names, in three languages; 113 offline adhkar entries across ten categories from Azkar DB (including all 61 existing morning/evening entries); and 99 names from Names of Allah JSON. Hadith references and grading remain linked to their Sunnah.com pages. Attribution and retrieval details are in `SOURCE-NOTICES.md`.
+Religious text is copied from the requested source datasets, never generated. The `data/*.json` files bundle 15 curated Quran references in Arabic, English (Abdel Haleem), and Urdu (Fateh Muhammad Jalandhry); 60 thematic Sunan Abi Dawud references with explicit **Sahih or Hasan** source grades and grader names, in three languages; 99 names from Names of Allah JSON. Hadith references and grading remain linked to their Sunnah.com pages. Attribution and retrieval details are in `SOURCE-NOTICES.md`.
 
-The names dataset supplies **Arabic meanings only**. Those meanings and the original adhkar remain in Arabic in all interfaces, with a source-language label; this release does not invent English or Urdu religious translations. Quran commentary opens the appropriate Quran.com tafsir page; commentary text is not bundled. There is no in-app tafsir API integration in v1.
+Azkar DB is bundled as 113 source-preserved entries in ten categories under the explicit reuse grant in its README. Structured repetition counts remain nullable, and absent references are labeled honestly. The names dataset supplies **Arabic meanings only**. Those meanings and the original adhkar remain in Arabic in all interfaces, with a source-language label; this release does not invent English or Urdu religious translations. Quran commentary opens the appropriate Quran.com tafsir page; commentary text is not bundled. There is no in-app tafsir API integration in v1.
 
 `hadithService` exposes the bundled open-data provider and a future server-provider interface. The Sunnah.com provider is inactive until a separately implemented server endpoint exists. No API key is present or requested by this frontend. A future server must keep `X-API-Key` private and enforce the same grade checks. There is no account/cloud-sync/push-notification backend in this version.
 
@@ -132,13 +140,26 @@ Browser notifications and adhan reminders work **only while the app is open**; b
 
 ## Privacy and backups
 
-Personal profiles, coordinates, plans, financial entries, children, words, and journals stay in `localStorage`. No analytics, ads, telemetry, geocoding, or remote personal-data requests are included. Fonts, religious data, charts, prayer calculations, and adhan sounds are local assets. Optional Quran refresh and EveryAyah recitation reveal the normal request metadata/IP address to their providers; commentary links open external sites. The promise concerns personal app entries, not network anonymity.
+Personal profiles, coordinates, plans, financial entries, children, words, and journals stay in `localStorage`. No analytics, ads, telemetry, geocoding, or remote personal-data requests are included. Fonts, bundled religious data, charts and prayer calculations are local assets. Adhkar/adhan downloads contact GitHub only after an explicit tap; downloaded files stay in local IndexedDB. Optional Quran refresh and EveryAyah recitation reveal the normal request metadata/IP address to their providers; commentary links open external sites. The promise concerns personal app entries, not network anonymity.
 
-Local browser storage and exported backups are **not encrypted**. Use a trusted device/browser profile. Clearing site data, uninstalling, or private-browsing cleanup can remove records. Export backups regularly and store them privately. Import replaces the current local records only after confirmation. There are no external deletion or account operations.
+Local browser storage, automatic safety copies and plain JSON exports are **not encrypted**. Settings → Export encrypted backup protects that exported file using AES-256-GCM and a PBKDF2-SHA256 key (310,000 iterations) with a unique random salt and nonce. Use at least 12 characters and store the passphrase separately; it cannot be recovered. Settings → Import backup accepts either format and asks for the encrypted file’s passphrase. Use a trusted device/browser profile. Clearing site data, uninstalling, or private-browsing cleanup can remove records. Export backups regularly and store them privately. Import/restore replaces current local records only after confirmation and a successful undo checkpoint. Settings → Restore a previous day lists seven recent active-day copies and recent undo/migration copies. Dates when the app was closed have no new snapshot. There are no external deletion or account operations.
 
 ## Code structure
 
-`index.html` retains independent service objects: `prayerService`, `hijriService`, `hadithService`, `quranService`, `adhkarService`, `storage`, `engine`, and `ui`. `phase2.js` adds `ramadanService`, the stable-ID `adhkarLibrary`, translations, and additive migrations. This keeps the application portable to a later component/server architecture. `window.Istiqamah` exposes the core services for integration tests. Imported data is shape-checked; user-entered text is escaped before HTML rendering. Dates are stored as local calendar keys in the selected timezone; exported schedule events are converted to UTC, including events close to midnight.
+- `index.html`: semantic shell, local vendor loaders and `js/app.js` module entry.
+- `css/app.css`: calm responsive light/dark styles.
+- `js/prayer.js`, `hijri.js`, `quran.js`, `hadith.js`, `adhkar.js`: existing services.
+- `js/config.js`, `dates.js`, `engine.js`, `records.js`: defaults, calendar keys, plans and scoring.
+- `js/storage.js`, `snapshots.js`, `backup-crypto.js`: compatible persistence, migration, undo/daily copies and encrypted files.
+- `js/content.js`, `optional-content.js`: lazy licensed readings and explicit optional downloads.
+- `js/ramadan.js`, `adhkar-library.js`, `phase2-state.js`: Ramadan planning, stable counters and the pure feature migration step.
+- `js/ui/ramadan.js`, `ui/adhkar-library.js`, `phase2-events.js`: feature rendering and event wiring; no separate root Phase 2 bundle.
+- `js/ui/`: one renderer per screen, common controls, onboarding, charts and backup/download workflows.
+- `js/i18n/{en,ar,ur,ml,hi}.json`: interface catalogs with identical keys; Arabic and Urdu use RTL.
+- `js/app.js`: startup and event wiring; `js/session.js`: transient shared session state.
+- `tests/browser.cjs`, `tests/phase1.cjs`: offline, recovery and regression checks; `tests/optional.cjs`: separate upstream-download integration.
+
+`window.Istiqamah` retains the existing service/test interface. Personal data stays under `istiqamah.v1`, with `version: 1` retained and `schemaVersion: 1` added. The original bytes are backed up under `istiqamah.migration.v1` **before** upgrading. Unknown/corrupt records enter recovery and cannot be overwritten by ordinary saves. See [the audit and complete storage contract](docs/PHASE-1-AUDIT.md).
 
 `sw.js` caches the complete shell and bundled data. Increment its cache version when shipping changed assets; reload after the new worker is installed. Online page reloads request fresh HTML and update the cached offline copy. Settings → Install app → Check for updates also checks the worker and reloads. Offline personal data persists independently of the shell cache.
 
@@ -153,7 +174,7 @@ npx playwright install chromium
 npm test
 ```
 
-Tests use `/usr/bin/chromium` when present, or Playwright's installed Chromium. Set `CHROMIUM_PATH` to override. The runners start local static servers on ports 8765 (`TEST_PORT`) and 8766 (`PHASE2_TEST_PORT`); the upgrade fixture uses the following port and uses a fresh browser profile, leaving personal browser data untouched. It checks onboarding, personalization, prayer/timezone calculations, scoring, pauses, historical snapshots, escaping, debts, zakat, words, children, tasbih, adhkar, fasting dates, ICS downloads, backups, print pages, translations, mobile overflow, source completeness, and offline reloads.
+Tests use `/usr/bin/chromium` when present, or Playwright's installed Chromium. Set `CHROMIUM_PATH` to override. The runner starts its own local static server on port 8765 (override with `TEST_PORT`) and uses a fresh browser profile, leaving personal browser data untouched. It checks onboarding, personalization, prayer/timezone calculations, scoring, pauses, historical snapshots, escaping, debts, zakat, words, children, tasbih, adhkar, fasting dates, ICS downloads, backups, print pages, translations, mobile overflow, source completeness, and offline reloads.
 
 ## Added to fill practical gaps
 
@@ -161,14 +182,33 @@ Tests use `/usr/bin/chromium` when present, or Playwright's installed Chromium. 
 - **Historical habit snapshots:** changing a target today does not rewrite an earlier month's score.
 - **Input validation, payment limits, and import confirmation:** protects existing records from malformed backups and accidental replacement.
 - **Focus timer and recorded Quran minutes for children:** turns study and family intentions into measurable daily actions.
-- **Cached fonts, data, and adhan audio:** the central daily workflow survives a lost connection without relying on third-party scripts.
+- **Cached licensed fonts/data and separate optional downloads:** the central daily workflow survives a lost connection without third-party scripts.
 - **Moon-sighting and reminder explanations:** makes the calendar's source and browser limitations visible where users need them.
 
-## Validation recorded for this release
+## Combined validation
 
-`npm test` runs **39 browser checks**: 23 existing workflow regressions and 16 Phase 2 checks. They cover the calendar adjustment, 29/30-day boundaries, Fajr/Maghrib selection, reminders crossing midnight in ICS, score exclusions and fasting streaks, ordinary-plan restoration, Quran calculations and frozen target snapshots, backup migration/import validation, escaped user text, stable source IDs, search/favorites, separate counters, all five languages, RTL/mobile layouts, and offline use. A fixture of the actual v1 app at commit `964ba52` verifies an old cached app upgrading to Phase 2 with counters, journals, and free-count progress preserved, followed by an offline restart. Screenshots are generated in ignored `test-results/` during the suite.
+`npm test` runs all inherited browser/Phase 1 checks, integration recovery cases, the Phase 2 suite, and real historical upgrades. The current result is **55 checks passed**: 38 browser/storage checks, 15 Phase 2 checks, and two real upgrade scenarios. `npm run test:optional` additionally verifies all four explicit optional downloads (original Azkar source, Makkah/Mishary recordings, and Uthmani font), rejects altered bytes, and checks offline use/removal with counters preserved.
 
-The existing print stylesheet remains covered by regression checks. Direct `file://` navigation is blocked by the managed test browser, so browser validation uses local HTTP. Source publication to GitHub and live GitHub Pages deployment are separate; a push alone is not proof the hosted deployment has finished. No cloud-environment publication is performed by this work.
+`tests/upgrades.cjs` stages the actual tracked application from **964ba52** and **fd79768**, installs its original service worker, saves counters/journals (and Ramadan/favorites for fd79768), proves the old app works offline, then deploys the current files. It verifies exact original-byte backup, both schema layers, preserved values, an IndexedDB daily copy, offline restart, and removal of retired assets from caches. Historical audio/font files are extracted only into temporary test deployments from existing Git history; they are not reintroduced into the repository or distribution. A full Git history containing those commits and `tar` are required for these two tests.
+
+Phase 1's historical Lighthouse measurements remain in its audit/history; they are not new 2.1.0 performance measurements. The app still has no build step, account, server API, analytics, or background push service.
+
+## Screenshots
+
+Current Chromium captures at 390 × 844 (sample profile):
+
+| Today | Arabic RTL | Dark mode | Encrypted backup |
+| --- | --- | --- | --- |
+| ![Today](docs/screenshots/today-mobile.png) | ![Arabic RTL](docs/screenshots/today-arabic.png) | ![Dark mode](docs/screenshots/today-dark.png) | ![Encrypted backup](docs/screenshots/encrypted-backup.png) |
+
+## Safely release and test on a phone
+
+1. Export a backup from the current live app before releasing. Keep the GitHub Pages origin/path unchanged so existing browser storage remains available.
+2. Review and merge the combined 2.1.0 pull request when ready; do not deploy either conflicting phase independently. GitHub Settings → Pages should continue to deploy from **main / (root)**; serve the entire repository, including `js/`, `css/`, `data/` and `vendor/`. No build or backend setup is required.
+3. On your phone, open the existing live URL in Chrome (Android) or Safari (iPhone). Settings → Check for updates, then reopen the app. Do not clear site data. Confirm the same name, habits and history are present; the schema upgrade is automatic.
+4. In Settings, export an encrypted backup, then import it using its passphrase. Confirm only after reviewing the replacement notice. Open Restore a previous day and verify a safety copy is listed.
+5. Wait for “Offline app cached”, turn on airplane mode, reopen, log one habit and view Progress. Try Arabic/Urdu and dark mode. Bundled adhkar work offline immediately after caching; optional recordings/font require a separate explicit download.
+6. No Supabase, Vercel, API keys or account settings are needed for 2.1.0. It adds no sync and no real background push notifications.
 
 ## License
 

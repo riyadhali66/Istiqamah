@@ -1,11 +1,13 @@
 {
   "name": "istiqamah",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "description": "A local-first Muslim life companion",
   "scripts": {
     "start": "python3 -m http.server 8000 --bind 0.0.0.0",
-    "test": "node tests/browser.cjs && node tests/phase2.cjs"
+    "test": "node tests/browser.cjs && node tests/phase2.cjs && node tests/upgrades.cjs",
+    "test:optional": "node tests/optional.cjs",
+    "test:upgrades": "node tests/upgrades.cjs"
   },
   "devDependencies": {
     "playwright": "1.58.2"

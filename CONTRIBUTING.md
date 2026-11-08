@@ -36,7 +36,11 @@ Look for issues labelled **good first issue** if you are new.
 ### Code guidelines
 
 - The app is local-first: **no backend, no accounts, no analytics, no ads, no trackers**. Personal data must never leave the device.
-- Keep the existing service structure in `index.html` (`prayerService`, `hijriService`, `hadithService`, `quranService`, `adhkarService`, `storage`, `engine`, `ui`).
+- Work in the matching `js/` ES module; per-screen renderers are in `js/ui/`, interface catalogs in `js/i18n/*.json`, and styles in `css/app.css`. There is no build step. `js/app.js` connects events/startup; `js/session.js` contains transient shared state.
+- Read [the storage contract](docs/PHASE-1-AUDIT.md) before changing records. Keep `istiqamah.v1` compatible, add migrations deliberately, and back up original bytes before any upgrade. A failed read must never authorize an overwrite.
+- Update every language catalog with identical keys. Religious translations require a licensed source; interface translation permission does not cover sacred text.
+- Add recovery/offline regression checks to `tests/phase1.cjs` or `tests/browser.cjs`. `npm run test:optional` is a separate network check for explicitly downloaded upstream assets; never commit those assets as test fixtures.
+- Keep every new module/JSON/CSS path in `sw.js` so lazy features remain available offline. Use HTTP/HTTPS for ES modules, not direct file opening.
 - Escape all user-entered text before rendering it as HTML.
 - Every interface string needs all supported languages. Keep RTL layout working for Arabic and Urdu.
 - When you change any cached asset, increase the cache version in `sw.js`.

@@ -1,40 +1,662 @@
-'use strict';
-const {chromium}=require('playwright');
-const assert=require('node:assert/strict');
-const {spawn}=require('node:child_process');
-const fs=require('node:fs');
-const path=require('node:path');
-const port=Number(process.env.TEST_PORT||8765),base=`http://127.0.0.1:${port}`;
-const server=spawn(process.env.PYTHON||(process.platform==='win32'?'python':'python3'),['-m','http.server',String(port),'--bind','127.0.0.1'],{cwd:path.resolve(__dirname,'..'),stdio:'ignore'});
-let browser,count=0;
-async function check(name,fn){await fn();count++;console.log(`PASS ${count}: ${name}`)}
-async function nav(page,id){await page.locator(`[data-action="nav"][data-id="${id}"]`).first().click()}
-async function tool(page,id){await nav(page,'tools');await page.locator(`[data-action="tool"][data-id="${id}"]`).click()}
-(async()=>{for(let i=0;i<50;i++){try{if((await fetch(base)).ok)break}catch{}await new Promise(r=>setTimeout(r,100))}
- const executablePath=process.env.CHROMIUM_PATH||(fs.existsSync('/usr/bin/chromium')?'/usr/bin/chromium':(fs.existsSync('C:/Program Files/Google/Chrome/Application/chrome.exe')?'C:/Program Files/Google/Chrome/Application/chrome.exe':undefined));
- browser=await chromium.launch({executablePath,headless:true,args:['--no-sandbox']});const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto(base);
- await check('eight-step onboarding and ranked goals',async()=>{assert(await page.locator('#wizard').isVisible());await page.locator('[data-draft="name"]').fill('Amina');await page.locator('[data-draft="gender"]').selectOption('Female');await page.locator('[data-draft="city"]').fill('Dubai');await page.locator('[data-draft="city"]').blur();await page.locator('[data-action="wizard-next"]').click();await page.locator('[data-draft="kids"]').fill('2');await page.locator('[data-draft="childNames"]').fill('Maryam:7, Yusuf:10');await page.locator('[data-draft="work"]').selectOption('Business owner');await page.locator('[data-action="wizard-next"]').click();await page.locator('[data-multi="goals"][value="Language Learning"]').check();await page.locator('[data-goal="Language Learning"]').fill('Hold a five-minute Arabic conversation');await page.locator('[data-action="rank"][data-id="Language Learning"][data-value="-1"]').click();await page.locator('[data-action="wizard-next"]').click();await page.locator('[data-multi="struggles"][value="Poor sleep"]').check();await page.locator('[data-multi="struggles"][value="Stress / anxiety"]').check();await page.locator('[data-action="wizard-next"]').click();await page.locator('[data-multi="start"][value="Sunnah fasting"]').check();await page.locator('[data-action="wizard-next"]').click();await page.locator('[data-action="wizard-next"]').click();await page.locator('[data-draft="hasDebts"]').check();await page.locator('[data-draft-debt="name"]').fill('Education');await page.locator('[data-draft-debt="total"]').fill('1000');await page.locator('[data-draft-debt="paid"]').fill('100');await page.locator('[data-action="wizard-debt"]').click();await page.locator('[data-action="wizard-next"]').click();await page.locator('[data-action="commitment"][data-id="Full power"]').click();await page.locator('[data-action="wizard-next"]').click();await page.locator('[data-action="finish-wizard"]').click();const state=await page.evaluate(()=>Istiqamah.state);assert.equal(state.profile.city,'Dubai');assert.equal(state.children.length,2);assert.equal(state.debts[0].paid,100);assert.equal(state.profile.method,'Dubai');assert(state.habits.length>=19);assert.equal(state.profile.goals[2],'Language Learning')});
- await check('prayer times, timezone, Hijri conversion, and midnight-safe calendar dates',async()=>{const result=await page.evaluate(()=>({prayers:Istiqamah.prayerService.calculate('2026-11-05').map(p=>[p.name,p.date.toISOString(),Istiqamah.prayerService.format(p.date)]),hijri:Istiqamah.hijriService.get('2024-03-11'),midnight:Istiqamah.zonedDate('2026-11-05','00:10').toISOString()}));assert.equal(result.prayers.length,5);assert(result.prayers.every((p,i,a)=>!i||p[1]>a[i-1][1]));assert.equal(result.hijri.month,9);assert.equal(result.hijri.day,1);assert.equal(result.midnight,'2026-11-04T20:10:00.000Z');assert(result.prayers[1][2].startsWith('12:'))});
- await check('commitment sizes and life-situation personalization',async()=>{const plans=await page.evaluate(()=>{const a=Istiqamah,p={...a.state.profile,commitment:'Full power'};return {gentle:a.engine.generate({...p,commitment:'Gentle start'}).habits,balanced:a.engine.generate({...p,commitment:'Balanced'}).habits,student:a.engine.generate({...p,work:'Student'}).habits,seeker:a.engine.generate({...p,work:'Job seeker'}).habits,business:a.engine.generate(p).habits}});assert.equal(plans.gentle.length-4,5);assert.equal(plans.balanced.length-4,10);assert(plans.student.some(h=>h.id==='study'));assert(plans.seeker.some(h=>h.id==='jobs'));assert(plans.business.some(h=>h.id==='leads'));assert(plans.gentle.some(h=>h.id==='expenses'))});
- await check('weighted score, one-tap check-in, partial targets, and maximum score',async()=>{await page.locator('[data-action="check"][data-id="prayer-Fajr"]').click();let result=await page.evaluate(()=>{let a=Istiqamah;return {score:a.score(a.today()),expected:Math.round(3/a.state.habits.reduce((s,h)=>s+h.weight,0)*100)}});assert.equal(result.score,result.expected);await page.evaluate(()=>{let a=Istiqamah,d=a.getDay();for(let h of a.state.habits)d.values[h.id]=h.target*2;a.storage.save();a.render()});assert.equal(await page.evaluate(()=>Istiqamah.score(Istiqamah.today())),100);await page.locator('[data-action="check"][data-id="prayer-Fajr"]').click();assert((await page.evaluate(()=>Istiqamah.score(Istiqamah.today())))<100)});
- await check('journal, mood, and stress persist after reload',async()=>{await page.locator('[data-journal="well"]').fill('A peaceful walk with my children');await page.locator('[data-action="mood"][data-value="4"]').click();await page.locator('#stress').fill('2');await page.locator('#stress').dispatchEvent('change');await page.reload();assert.equal(await page.locator('[data-journal="well"]').inputValue(),'A peaceful walk with my children');assert.equal(await page.evaluate(()=>Istiqamah.getDay().mood),4);assert.equal(await page.evaluate(()=>Istiqamah.getDay().stress),2)});
- await check('prayer pauses exclude weights and protect prayer streaks',async()=>{await page.locator('#pause-faith').check();assert.equal(await page.evaluate(()=>Istiqamah.score(Istiqamah.today())),100);assert(await page.locator('[data-action="check"][data-id="prayer-Fajr"]').isDisabled());const streak=await page.evaluate(()=>{let a=Istiqamah,h=a.state.habits.find(h=>h.id==='prayer-Fajr'),y=a.getDay(a.offsetDay(a.today(),-1));y.values[h.id]=1;return a.habitStreak(h)});assert.equal(streak,1);await page.locator('#pause-faith').uncheck()});
- await check('habit editing keeps previous day snapshots and escapes custom text',async()=>{await nav(page,'settings');const form=page.locator('#habit-form');await form.locator('[name="label"]').fill('<img src=x onerror=alert(1)>');await form.locator('[name="target"]').fill('2');await form.locator('button[type="submit"],button.btn').last().click();assert.equal(await page.locator('img[src="x"]').count(),0);const h=await page.evaluate(()=>Istiqamah.state.habits.at(-1));assert.equal(h.target,2);const previous=await page.evaluate(()=>Istiqamah.state.days[Istiqamah.offsetDay(Istiqamah.today(),-1)].snapshot.length);await page.locator(`[data-edit-habit="${h.id}"][data-key="target"]`).fill('3');await page.locator(`[data-edit-habit="${h.id}"][data-key="target"]`).blur();assert.equal(await page.evaluate(()=>Istiqamah.state.days[Istiqamah.offsetDay(Istiqamah.today(),-1)].snapshot.length),previous);await page.locator(`[data-action="remove-habit"][data-id="${h.id}"]`).click()});
- await check('debt payments update balance and payment history',async()=>{await tool(page,'wealth');const debt=await page.evaluate(()=>Istiqamah.state.debts[0]);await page.locator(`#pay-${debt.id}`).fill('2000');await page.locator(`[data-action="pay"][data-id="${debt.id}"]`).click();assert.equal(await page.evaluate(()=>Istiqamah.state.debts[0].paid),100);await page.locator(`#pay-${debt.id}`).fill('250');await page.locator(`[data-action="pay"][data-id="${debt.id}"]`).click();assert.equal(await page.evaluate(()=>Istiqamah.state.debts[0].paid),350);assert.equal(await page.evaluate(()=>Istiqamah.state.debts[0].payments.length),2)});
- await check('zakat uses the entered gold price and the nisab threshold',async()=>{await page.locator('[data-zakat="cash"]').fill('100000');await page.locator('[data-zakat="cash"]').blur();await page.locator('[data-zakat="goldPrice"]').fill('100');await page.locator('[data-zakat="goldPrice"]').blur();assert((await page.locator('body').innerText()).includes('2,500'));assert((await page.locator('body').innerText()).includes('8,500'))});
- await check('word log, review reveal, and study habit link',async()=>{await tool(page,'words');await page.locator('#word-form [name="word"]').fill('Consistency');await page.locator('#word-form [name="meaning"]').fill('Steady action');await page.locator('#word-form [name="example"]').fill('One small step every day.');await page.locator('#word-form .btn').click();await page.locator('[data-action="reveal"]').click();assert.equal((await page.locator('.word-card').innerText()).replace(/\n+/g,'\n'),'Consistency\nSteady action\nOne small step every day.');assert.equal(await page.evaluate(()=>Istiqamah.getDay().values.words>=1),true)});
- await check('kids have separate stars, Quran minutes, and parent rewards',async()=>{await tool(page,'kids');const id=await page.evaluate(()=>Istiqamah.state.children[0].id);await page.locator(`[data-action="kid-star"][data-id="${id}"][data-key="Prayer"]`).click();await page.locator(`[data-reward="${id}"]`).fill('Choose our weekend walk');await page.locator(`[data-reward="${id}"]`).blur();await page.locator(`[data-kid-minutes="${id}"]`).fill('12');await page.locator(`[data-kid-minutes="${id}"]`).blur();assert.equal(await page.evaluate(id=>Istiqamah.getDay().kids[id].Prayer,id),true);assert.equal(await page.evaluate(id=>Istiqamah.getDay().kidMinutes[id],id),12)});
- await check('tasbih counts, links a habit, and persists',async()=>{await tool(page,'tasbih');await page.locator('#tasbih-link').selectOption('adhkar-am');for(let i=0;i<33;i++)await page.locator('[data-action="tasbih"]').click();assert.equal(await page.locator('.tasbih-button').innerText(),'33');assert.equal(await page.evaluate(()=>Istiqamah.getDay().values['adhkar-am']),1);await page.reload();assert.equal(await page.evaluate(()=>Istiqamah.state.tasbih.count),33)});
- await check('Tasbih adhkar picker shares daily counts, preserves selections, and retains free counting',async()=>{await tool(page,'tasbih');assert.equal(await page.locator('#tasbih-adhkar optgroup').count(),10);assert.equal(await page.locator('#tasbih-adhkar option').count(),114);await page.locator('#tasbih-adhkar').selectOption(await page.evaluate(()=>Istiqamah.adhkarLibrary.aliases.get('morning-1')));const expected=await page.evaluate(()=>Istiqamah.adhkarService.list('morning')[1].text);assert.equal(await page.locator('article .quote').textContent(),expected);await page.locator('[data-action="tasbih"]').click();await page.locator('[data-action="tasbih"]').click();assert.equal(await page.evaluate(()=>Istiqamah.getDay(Istiqamah.today()).adhkar['morning-1']),2);await page.locator('#tasbih-adhkar').selectOption(await page.evaluate(()=>Istiqamah.adhkarLibrary.aliases.get('evening-0')));await page.locator('[data-action="tasbih"]').click();assert(await page.locator('[data-action="tasbih"]').isDisabled());await page.locator('[data-action="tasbih-next"]').click();assert.equal(await page.locator('#tasbih-adhkar').inputValue(),await page.evaluate(()=>Istiqamah.adhkarLibrary.aliases.get('evening-1')));await page.reload();await tool(page,'tasbih');assert.equal(await page.locator('#tasbih-adhkar').inputValue(),await page.evaluate(()=>Istiqamah.adhkarLibrary.aliases.get('evening-1')));await page.locator('#tasbih-adhkar').selectOption(await page.evaluate(()=>Istiqamah.adhkarLibrary.aliases.get('morning-1')));assert.equal(await page.locator('.tasbih-button').innerText(),'2');await page.locator('[data-action="tasbih"]').click();assert(await page.locator('[data-action="tasbih"]').isDisabled());await page.locator('[data-action="tasbih-reset"]').click();assert.equal(await page.locator('.tasbih-button').innerText(),'0');assert.equal(await page.evaluate(()=>Istiqamah.getDay(Istiqamah.today()).adhkar['evening-0']),1);await page.locator('#tasbih-adhkar').selectOption('');assert.equal(await page.locator('.tasbih-button').innerText(),'33')});
- await check('adhkar repeat counts use source targets and reset',async()=>{await nav(page,'reflections');const target=await page.evaluate(()=>Istiqamah.adhkarService.list('morning')[0].count);for(let i=0;i<target;i++)await page.locator('[data-action="dhikr"][data-index="0"]').click();assert(await page.locator('[data-action="dhikr"][data-index="0"]').isDisabled());await page.locator('[data-action="dhikr-reset"][data-index="0"]').click();assert.equal(await page.evaluate(()=>Istiqamah.getDay().adhkar['morning-0']),0)});
- await check('fasting dates include White Days and exclude Eid and Ramadan voluntary prompts',async()=>{const r=await page.evaluate(()=>({white:Istiqamah.hijriService.fasts('2024-03-24'),eid:Istiqamah.hijriService.prohibited('2024-04-10'),ramadan:Istiqamah.hijriService.fasts('2024-03-11')}));assert(r.eid);assert.deepEqual(r.ramadan,[]);const white=await page.evaluate(()=>{let d=ArabicCore.hijriToGregorian({year:1448,month:5,day:13});let k=`${d.year}-${String(d.month).padStart(2,'0')}-${String(d.day).padStart(2,'0')}`;return Istiqamah.hijriService.fasts(k)});assert(white.includes('White Days'));await tool(page,'fasting');assert(await page.locator('.calendar-grid').isVisible())});
- await check('schedule editing and UTC calendar download with alarms',async()=>{await nav(page,'settings');await page.locator('[data-action="schedule"]').click();await page.locator('[data-block-time="deep"]').fill('10:15');await page.locator('#schedule-form .btn').click();const downloadEvent=page.waitForEvent('download');await page.locator('[data-action="export-day"]').click();const file=await downloadEvent;const text=fs.readFileSync(await file.path(),'utf8');assert(text.includes('BEGIN:VCALENDAR'));assert(text.includes('DTSTART:'));assert(text.includes('T061500Z'));assert(text.includes('BEGIN:VALARM'));assert(!text.includes('TZID=undefined'))});
- await check('backup export, rejection of malformed imports, and confirmed restore',async()=>{const event=page.waitForEvent('download');await page.locator('[data-action="backup"]').click();const download=await event;const data=fs.readFileSync(await download.path(),'utf8');assert(await page.evaluate(s=>Istiqamah.validate(JSON.parse(s)),data));await page.locator('#import-file').setInputFiles({name:'bad.json',mimeType:'application/json',buffer:Buffer.from('{"version":1}')});await page.locator('#toast').waitFor({state:'visible'});assert((await page.locator('#toast').innerText()).includes('not a valid'));await page.locator('#import-file').setInputFiles({name:'good.json',mimeType:'application/json',buffer:Buffer.from(data)});await page.locator('#confirm-import').click();assert.equal(await page.evaluate(()=>Istiqamah.state.profile.name),'Amina');const malicious=JSON.parse(data);malicious.children[0].id='"><img src=x>';assert.equal(await page.evaluate(s=>Istiqamah.validate(s),malicious),false)});
- await check('progress charts, heatmap, monthly goals, and print pages',async()=>{await nav(page,'progress');assert.equal(await page.locator('canvas').count(),3);assert.equal(await page.locator('.heatmap thead th').count(),31);await page.locator('[data-review="wins"]').fill('Consistent small steps');await page.evaluate(()=>{window.print=()=>{window.printCalled=true}});await page.locator('[data-action="print"]').click();assert.equal(await page.evaluate(()=>window.printCalled),true);assert.equal(await page.locator('#print-area .print-page').count(),2);assert((await page.locator('#print-area').textContent()).includes('Consistent small steps'));await page.emulateMedia({media:'print'});assert(await page.locator('#print-area').isVisible());assert.equal(await page.locator('#main').isVisible(),false);await page.emulateMedia({media:'screen'})});
- await check('Arabic, Urdu, Malayalam, and Hindi interfaces, dark mode, and mobile width',async()=>{for(let language of ['ar','ur','ml','hi']){await nav(page,'settings');await page.locator('[data-profile="language"]').selectOption(language);assert.equal(await page.locator('html').getAttribute('dir'),['ar','ur'].includes(language)?'rtl':'ltr');assert.equal(await page.locator('html').getAttribute('lang'),language);await page.setViewportSize({width:390,height:844});await nav(page,'today');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)}await nav(page,'settings');await page.locator('[data-profile="language"]').selectOption('en');await page.locator('#theme-select').selectOption('dark');assert.equal(await page.locator('html').getAttribute('data-theme'),'dark');await page.locator('#theme-select').selectOption('light')});
- await check('religious bundle has 15 multilingual verses and 60 explicitly graded hadiths',async()=>{const d=await page.evaluate(()=>({q:SOURCE_DATA.quran,h:SOURCE_DATA.hadith,az:SOURCE_DATA.adhkar.length,n:SOURCE_DATA.names.length}));assert.equal(d.q.length,15);assert(d.q.every(v=>v.ar&&v.en&&v.ur));assert.equal(d.h.length,60);assert(d.h.every(h=>h.ar&&h.en&&h.ur&&h.grades.length&&h.grades.every(g=>['Sahih','Hasan','Hasan Sahih'].includes(g.grade))));assert(d.az>50);assert.equal(d.n,99)});
- await check('online reload replaces stale cached HTML without losing personal records',async()=>{await page.evaluate(async()=>{await navigator.serviceWorker.ready});await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);await page.evaluate(async()=>{const name=(await caches.keys()).find(k=>k.startsWith('istiqamah-'));const cache=await caches.open(name);const current=await (await fetch('index.html')).text();const stale=current.replaceAll('tasbih-adhkar','stale-adhkar-picker');await cache.put('./index.html',new Response(stale,{headers:{'Content-Type':'text/html'}}));await cache.put('./',new Response(stale,{headers:{'Content-Type':'text/html'}}))});await page.reload();await tool(page,'tasbih');assert(await page.locator('#tasbih-adhkar').isVisible());assert.equal(await page.evaluate(()=>Istiqamah.state.profile.name),'Amina');assert.equal(await page.evaluate(()=>Istiqamah.state.tasbih.count),33)});
- await check('PWA shell, fonts, source content, and adhan work after an offline reload',async()=>{await page.evaluate(async()=>{await navigator.serviceWorker.ready});await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);await context.setOffline(true);await page.reload();assert.equal(await page.title(),'Istiqamah — Small deeds. Every day.');await nav(page,'today');assert.equal(await page.locator('.prayer-slot').count(),5);const cached=await page.evaluate(async()=>{const r=await fetch('data/adhan-makkah.mp3');return {ok:r.ok,bytes:(await r.arrayBuffer()).byteLength}});assert(cached.ok&&cached.bytes>400000);await page.locator('[data-action="check"][data-id="prayer-Isha"]').click();await page.reload();assert(await page.locator('[data-action="check"][data-id="prayer-Isha"]').getAttribute('aria-pressed'));await context.setOffline(false)});
- await check('no browser runtime exceptions',async()=>assert.deepEqual(errors,[]));
- console.log(`\n${count} browser checks passed.`);
-})().catch(error=>{console.error(error);process.exitCode=1}).finally(async()=>{await browser?.close();server.kill()});
+"use strict";
+const { chromium } = require("playwright");
+const assert = require("node:assert/strict");
+const { spawn } = require("node:child_process");
+const fs = require("node:fs");
+const path = require("node:path");
+const port = Number(process.env.TEST_PORT || 8765),
+  base = `http://127.0.0.1:${port}`;
+const server = spawn(
+  process.env.PYTHON || (process.platform === "win32" ? "python" : "python3"),
+  ["-m", "http.server", String(port), "--bind", "127.0.0.1"],
+  { cwd: path.resolve(__dirname, ".."), stdio: "ignore" },
+);
+let browser,
+  count = 0;
+async function check(name, fn) {
+  await fn();
+  count++;
+  console.log(`PASS ${count}: ${name}`);
+}
+async function ready(page) {
+  await page.waitForFunction(() => !!window.Istiqamah);
+}
+async function nav(page, id) {
+  await page.locator(`[data-action="nav"][data-id="${id}"]`).first().click();
+  await page.waitForFunction(
+    (id) => document.querySelector(".navbtn.active")?.dataset.id === id,
+    id,
+  );
+}
+async function tool(page, id) {
+  await nav(page, "tools");
+  await page.locator(`[data-action="tool"][data-id="${id}"]`).click();
+}
+(async () => {
+  for (let i = 0; i < 50; i++) {
+    try {
+      if ((await fetch(base)).ok) break;
+    } catch {}
+    await new Promise((r) => setTimeout(r, 100));
+  }
+  const executablePath =
+    process.env.CHROMIUM_PATH ||
+    (fs.existsSync("/usr/bin/chromium")
+      ? "/usr/bin/chromium"
+      : fs.existsSync("C:/Program Files/Google/Chrome/Application/chrome.exe")
+        ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
+        : undefined);
+  browser = await chromium.launch({
+    executablePath,
+    headless: true,
+    args: ["--no-sandbox"],
+  });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    acceptDownloads: true,
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto(base);
+  await ready(page);
+  await check("eight-step onboarding and ranked goals", async () => {
+    assert(await page.locator("#wizard").isVisible());
+    await page.locator('[data-draft="name"]').fill("Amina");
+    await page.locator('[data-draft="gender"]').selectOption("Female");
+    await page.locator('[data-draft="city"]').fill("Dubai");
+    await page.locator('[data-draft="city"]').blur();
+    await page.locator('[data-action="wizard-next"]').click();
+    await page.locator('[data-draft="kids"]').fill("2");
+    await page.locator('[data-draft="childNames"]').fill("Maryam:7, Yusuf:10");
+    await page.locator('[data-draft="work"]').selectOption("Business owner");
+    await page.locator('[data-action="wizard-next"]').click();
+    await page
+      .locator('[data-multi="goals"][value="Language Learning"]')
+      .check();
+    await page
+      .locator('[data-goal="Language Learning"]')
+      .fill("Hold a five-minute Arabic conversation");
+    await page
+      .locator(
+        '[data-action="rank"][data-id="Language Learning"][data-value="-1"]',
+      )
+      .click();
+    await page.locator('[data-action="wizard-next"]').click();
+    await page.locator('[data-multi="struggles"][value="Poor sleep"]').check();
+    await page
+      .locator('[data-multi="struggles"][value="Stress / anxiety"]')
+      .check();
+    await page.locator('[data-action="wizard-next"]').click();
+    await page.locator('[data-multi="start"][value="Sunnah fasting"]').check();
+    await page.locator('[data-action="wizard-next"]').click();
+    await page.locator('[data-action="wizard-next"]').click();
+    await page.locator('[data-draft="hasDebts"]').check();
+    await page.locator('[data-draft-debt="name"]').fill("Education");
+    await page.locator('[data-draft-debt="total"]').fill("1000");
+    await page.locator('[data-draft-debt="paid"]').fill("100");
+    await page.locator('[data-action="wizard-debt"]').click();
+    await page.locator('[data-action="wizard-next"]').click();
+    await page
+      .locator('[data-action="commitment"][data-id="Full power"]')
+      .click();
+    await page.locator('[data-action="wizard-next"]').click();
+    await page.locator('[data-action="finish-wizard"]').click();
+    const state = await page.evaluate(() => Istiqamah.state);
+    assert.equal(state.profile.city, "Dubai");
+    assert.equal(state.children.length, 2);
+    assert.equal(state.debts[0].paid, 100);
+    assert.equal(state.profile.method, "Dubai");
+    assert(state.habits.length >= 19);
+    assert.equal(state.profile.goals[2], "Language Learning");
+  });
+  await check(
+    "prayer times, timezone, Hijri conversion, and midnight-safe calendar dates",
+    async () => {
+      const result = await page.evaluate(() => ({
+        prayers: Istiqamah.prayerService
+          .calculate("2026-11-05")
+          .map((p) => [
+            p.name,
+            p.date.toISOString(),
+            Istiqamah.prayerService.format(p.date),
+          ]),
+        hijri: Istiqamah.hijriService.get("2024-03-11"),
+        midnight: Istiqamah.zonedDate("2026-11-05", "00:10").toISOString(),
+      }));
+      assert.equal(result.prayers.length, 5);
+      assert(result.prayers.every((p, i, a) => !i || p[1] > a[i - 1][1]));
+      assert.equal(result.hijri.month, 9);
+      assert.equal(result.hijri.day, 1);
+      assert.equal(result.midnight, "2026-11-04T20:10:00.000Z");
+      assert(result.prayers[1][2].startsWith("12:"));
+    },
+  );
+  await check(
+    "commitment sizes and life-situation personalization",
+    async () => {
+      const plans = await page.evaluate(() => {
+        const a = Istiqamah,
+          p = { ...a.state.profile, commitment: "Full power" };
+        return {
+          gentle: a.engine.generate({ ...p, commitment: "Gentle start" })
+            .habits,
+          balanced: a.engine.generate({ ...p, commitment: "Balanced" }).habits,
+          student: a.engine.generate({ ...p, work: "Student" }).habits,
+          seeker: a.engine.generate({ ...p, work: "Job seeker" }).habits,
+          business: a.engine.generate(p).habits,
+        };
+      });
+      assert.equal(plans.gentle.length - 4, 5);
+      assert.equal(plans.balanced.length - 4, 10);
+      assert(plans.student.some((h) => h.id === "study"));
+      assert(plans.seeker.some((h) => h.id === "jobs"));
+      assert(plans.business.some((h) => h.id === "leads"));
+      assert(plans.gentle.some((h) => h.id === "expenses"));
+    },
+  );
+  await check(
+    "weighted score, one-tap check-in, partial targets, and maximum score",
+    async () => {
+      await page
+        .locator('[data-action="check"][data-id="prayer-Fajr"]')
+        .click();
+      let result = await page.evaluate(() => {
+        let a = Istiqamah;
+        return {
+          score: a.score(a.today()),
+          expected: Math.round(
+            (3 / a.state.habits.reduce((s, h) => s + h.weight, 0)) * 100,
+          ),
+        };
+      });
+      assert.equal(result.score, result.expected);
+      await page.evaluate(() => {
+        let a = Istiqamah,
+          d = a.getDay();
+        for (let h of a.state.habits) d.values[h.id] = h.target * 2;
+        a.storage.save();
+        a.render();
+      });
+      assert.equal(
+        await page.evaluate(() => Istiqamah.score(Istiqamah.today())),
+        100,
+      );
+      await page
+        .locator('[data-action="check"][data-id="prayer-Fajr"]')
+        .click();
+      assert(
+        (await page.evaluate(() => Istiqamah.score(Istiqamah.today()))) < 100,
+      );
+    },
+  );
+  await check("journal, mood, and stress persist after reload", async () => {
+    await page
+      .locator('[data-journal="well"]')
+      .fill("A peaceful walk with my children");
+    await page.locator('[data-action="mood"][data-value="4"]').click();
+    await page.locator("#stress").fill("2");
+    await page.locator("#stress").dispatchEvent("change");
+    await page.reload();
+    await ready(page);
+    assert.equal(
+      await page.locator('[data-journal="well"]').inputValue(),
+      "A peaceful walk with my children",
+    );
+    assert.equal(await page.evaluate(() => Istiqamah.getDay().mood), 4);
+    assert.equal(await page.evaluate(() => Istiqamah.getDay().stress), 2);
+  });
+  await check(
+    "prayer pauses exclude weights and protect prayer streaks",
+    async () => {
+      await page.locator("#pause-faith").check();
+      assert.equal(
+        await page.evaluate(() => Istiqamah.score(Istiqamah.today())),
+        100,
+      );
+      assert(
+        await page
+          .locator('[data-action="check"][data-id="prayer-Fajr"]')
+          .isDisabled(),
+      );
+      const streak = await page.evaluate(() => {
+        let a = Istiqamah,
+          h = a.state.habits.find((h) => h.id === "prayer-Fajr"),
+          y = a.getDay(a.offsetDay(a.today(), -1));
+        y.values[h.id] = 1;
+        return a.habitStreak(h);
+      });
+      assert.equal(streak, 1);
+      await page.locator("#pause-faith").uncheck();
+    },
+  );
+  await check(
+    "habit editing keeps previous day snapshots and escapes custom text",
+    async () => {
+      await nav(page, "settings");
+      const form = page.locator("#habit-form");
+      await form.locator('[name="label"]').fill("<img src=x onerror=alert(1)>");
+      await form.locator('[name="target"]').fill("2");
+      await form.locator('button[type="submit"],button.btn').last().click();
+      assert.equal(await page.locator('img[src="x"]').count(), 0);
+      const h = await page.evaluate(() => Istiqamah.state.habits.at(-1));
+      assert.equal(h.target, 2);
+      const previous = await page.evaluate(
+        () =>
+          Istiqamah.state.days[Istiqamah.offsetDay(Istiqamah.today(), -1)]
+            .snapshot.length,
+      );
+      await page
+        .locator(`[data-edit-habit="${h.id}"][data-key="target"]`)
+        .fill("3");
+      await page
+        .locator(`[data-edit-habit="${h.id}"][data-key="target"]`)
+        .blur();
+      assert.equal(
+        await page.evaluate(
+          () =>
+            Istiqamah.state.days[Istiqamah.offsetDay(Istiqamah.today(), -1)]
+              .snapshot.length,
+        ),
+        previous,
+      );
+      await page
+        .locator(`[data-action="remove-habit"][data-id="${h.id}"]`)
+        .click();
+    },
+  );
+  await check("debt payments update balance and payment history", async () => {
+    await tool(page, "wealth");
+    const debt = await page.evaluate(() => Istiqamah.state.debts[0]);
+    await page.locator(`#pay-${debt.id}`).fill("2000");
+    await page.locator(`[data-action="pay"][data-id="${debt.id}"]`).click();
+    assert.equal(await page.evaluate(() => Istiqamah.state.debts[0].paid), 100);
+    await page.locator(`#pay-${debt.id}`).fill("250");
+    await page.locator(`[data-action="pay"][data-id="${debt.id}"]`).click();
+    assert.equal(await page.evaluate(() => Istiqamah.state.debts[0].paid), 350);
+    assert.equal(
+      await page.evaluate(() => Istiqamah.state.debts[0].payments.length),
+      2,
+    );
+  });
+  await check(
+    "zakat uses the entered gold price and the nisab threshold",
+    async () => {
+      await page.locator('[data-zakat="cash"]').fill("100000");
+      await page.locator('[data-zakat="cash"]').blur();
+      await page.locator('[data-zakat="goldPrice"]').fill("100");
+      await page.locator('[data-zakat="goldPrice"]').blur();
+      assert((await page.locator("body").innerText()).includes("2,500"));
+      assert((await page.locator("body").innerText()).includes("8,500"));
+    },
+  );
+  await check("word log, review reveal, and study habit link", async () => {
+    await tool(page, "words");
+    await page.locator('#word-form [name="word"]').fill("Consistency");
+    await page.locator('#word-form [name="meaning"]').fill("Steady action");
+    await page
+      .locator('#word-form [name="example"]')
+      .fill("One small step every day.");
+    await page.locator("#word-form .btn").click();
+    await page.locator('[data-action="reveal"]').click();
+    assert.equal(
+      (await page.locator(".word-card").innerText()).replace(/\n+/g, "\n"),
+      "Consistency\nSteady action\nOne small step every day.",
+    );
+    assert.equal(
+      await page.evaluate(() => Istiqamah.getDay().values.words >= 1),
+      true,
+    );
+  });
+  await check(
+    "kids have separate stars, Quran minutes, and parent rewards",
+    async () => {
+      await tool(page, "kids");
+      const id = await page.evaluate(() => Istiqamah.state.children[0].id);
+      await page
+        .locator(`[data-action="kid-star"][data-id="${id}"][data-key="Prayer"]`)
+        .click();
+      await page
+        .locator(`[data-reward="${id}"]`)
+        .fill("Choose our weekend walk");
+      await page.locator(`[data-reward="${id}"]`).blur();
+      await page.locator(`[data-kid-minutes="${id}"]`).fill("12");
+      await page.locator(`[data-kid-minutes="${id}"]`).blur();
+      assert.equal(
+        await page.evaluate((id) => Istiqamah.getDay().kids[id].Prayer, id),
+        true,
+      );
+      assert.equal(
+        await page.evaluate((id) => Istiqamah.getDay().kidMinutes[id], id),
+        12,
+      );
+    },
+  );
+  await check("tasbih counts, links a habit, and persists", async () => {
+    await tool(page, "tasbih");
+    await page.locator("#tasbih-link").selectOption("adhkar-am");
+    for (let i = 0; i < 33; i++)
+      await page.locator('[data-action="tasbih"]').click();
+    assert.equal(await page.locator(".tasbih-button").innerText(), "33");
+    assert.equal(
+      await page.evaluate(() => Istiqamah.getDay().values["adhkar-am"]),
+      1,
+    );
+    await page.reload();
+    await ready(page);
+    assert.equal(await page.evaluate(() => Istiqamah.state.tasbih.count), 33);
+  });
+  await check(
+    "bundled permitted adhkar preserves positional counter selections",
+    async () => {
+      await tool(page, "tasbih");
+      assert.equal(await page.locator("#tasbih-adhkar option").count(), 114);
+      assert.equal(await page.evaluate(() => SOURCE_DATA.adhkar.length), 61);
+      await page.evaluate(() => {
+        Istiqamah.state.tasbih.selected = "morning-1";
+        Istiqamah.getDay().adhkar["morning-1"] = 2;
+        Istiqamah.storage.save();
+      });
+      await page.reload();
+      await ready(page);
+      assert.equal(
+        await page.evaluate(() => Istiqamah.state.tasbih.selected),
+        await page.evaluate(()=>Istiqamah.adhkarLibrary.aliases.get("morning-1")),
+      );
+      assert.equal(
+        await page.evaluate(() => Istiqamah.getDay().adhkar["morning-1"]),
+        2,
+      );
+      await tool(page, "tasbih");
+      assert.equal(await page.locator(".tasbih-button").innerText(), "2");
+    },
+  );
+  await check(
+    "counter behavior with a synthetic non-religious test dataset",
+    async () => {
+      await page.evaluate(() => {
+        const lib=Istiqamah.adhkarLibrary;
+        window.originalLibraryList=lib.list;
+        window.counterFixtures=[{id:'azkar-'+"0".repeat(20),category:'morning',categoryLabel:'Morning adhkar',text:'TEST COUNTER',description:'Fixture',reference:'Test only',count:3,legacyKeys:['morning-0'],provenance:{url:'https://github.com/osamayy/azkar-db'}},{id:'azkar-'+"1".repeat(20),category:'evening',categoryLabel:'Evening adhkar',text:'TEST COUNTER',description:'Fixture',reference:'Test only',count:1,legacyKeys:['evening-0'],provenance:{url:'https://github.com/osamayy/azkar-db'}}];
+        for(const e of window.counterFixtures)lib.byId.set(e.id,e);
+        lib.list=period=>window.counterFixtures.filter(e=>e.category===period);
+        Istiqamah.state.tasbih.selected = "";
+        Istiqamah.render();
+      });
+      await tool(page, "tasbih");
+      await page.evaluate(()=>{Istiqamah.state.tasbih.selected=window.counterFixtures[0].id;Istiqamah.render()});
+      for (let i = 0; i < 3; i++)
+        await page.locator('[data-action="tasbih"]').click();
+      assert(await page.locator('[data-action="tasbih"]').isDisabled());
+      assert.equal(
+        await page.evaluate(() => Istiqamah.getDay().values["adhkar-am"]),
+        1,
+      );
+      await nav(page, "reflections");
+      await page.locator('[data-action="dhikr-reset"][data-index="0"]').click();
+      assert.equal(
+        await page.evaluate(() => Istiqamah.getDay().adhkar["morning-0"]),
+        0,
+      );
+      await page.evaluate(() => {
+        const lib=Istiqamah.adhkarLibrary;lib.list=window.originalLibraryList;for(const e of window.counterFixtures)lib.byId.delete(e.id);
+        Istiqamah.state.tasbih.selected = "";
+        Istiqamah.storage.save();
+      });
+    },
+  );
+  await check(
+    "fasting dates include White Days and exclude Eid and Ramadan voluntary prompts",
+    async () => {
+      const r = await page.evaluate(() => ({
+        white: Istiqamah.hijriService.fasts("2024-03-24"),
+        eid: Istiqamah.hijriService.prohibited("2024-04-10"),
+        ramadan: Istiqamah.hijriService.fasts("2024-03-11"),
+      }));
+      assert(r.eid);
+      assert.deepEqual(r.ramadan, []);
+      const white = await page.evaluate(() => {
+        let d = ArabicCore.hijriToGregorian({ year: 1448, month: 5, day: 13 });
+        let k = `${d.year}-${String(d.month).padStart(2, "0")}-${String(d.day).padStart(2, "0")}`;
+        return Istiqamah.hijriService.fasts(k);
+      });
+      assert(white.includes("White Days"));
+      await tool(page, "fasting");
+      assert(await page.locator(".calendar-grid").isVisible());
+    },
+  );
+  await check(
+    "schedule editing and UTC calendar download with alarms",
+    async () => {
+      await nav(page, "settings");
+      await page.locator('[data-action="schedule"]').click();
+      await page.locator('[data-block-time="deep"]').fill("10:15");
+      await page.locator("#schedule-form .btn").click();
+      const downloadEvent = page.waitForEvent("download");
+      await page.locator('[data-action="export-day"]').click();
+      const file = await downloadEvent;
+      const text = fs.readFileSync(await file.path(), "utf8");
+      assert(text.includes("BEGIN:VCALENDAR"));
+      assert(text.includes("DTSTART:"));
+      assert(text.includes("T061500Z"));
+      assert(text.includes("BEGIN:VALARM"));
+      assert(!text.includes("TZID=undefined"));
+    },
+  );
+  await check(
+    "backup export, rejection of malformed imports, and confirmed restore",
+    async () => {
+      const event = page.waitForEvent("download");
+      await page.locator('[data-action="backup"]').click();
+      const download = await event;
+      const data = fs.readFileSync(await download.path(), "utf8");
+      assert(
+        await page.evaluate((s) => Istiqamah.validate(JSON.parse(s)), data),
+      );
+      await page.locator("#import-file").setInputFiles({
+        name: "bad.json",
+        mimeType: "application/json",
+        buffer: Buffer.from('{"version":1}'),
+      });
+      await page.locator("#toast").waitFor({ state: "visible" });
+      assert(
+        (await page.locator("#toast").innerText()).includes("not a valid"),
+      );
+      await page.locator("#import-file").setInputFiles({
+        name: "good.json",
+        mimeType: "application/json",
+        buffer: Buffer.from(data),
+      });
+      await page.locator("#confirm-import").click();
+      assert.equal(
+        await page.evaluate(() => Istiqamah.state.profile.name),
+        "Amina",
+      );
+      const malicious = JSON.parse(data);
+      malicious.children[0].id = '"><img src=x>';
+      assert.equal(
+        await page.evaluate((s) => Istiqamah.validate(s), malicious),
+        false,
+      );
+    },
+  );
+  await check(
+    "progress charts, heatmap, monthly goals, and print pages",
+    async () => {
+      await nav(page, "progress");
+      assert.equal(await page.locator("canvas").count(), 3);
+      assert.equal(await page.locator(".heatmap thead th").count(), 31);
+      await page.locator('[data-review="wins"]').fill("Consistent small steps");
+      await page.evaluate(() => {
+        window.print = () => {
+          window.printCalled = true;
+        };
+      });
+      await page.locator('[data-action="print"]').click();
+      assert.equal(await page.evaluate(() => window.printCalled), true);
+      assert.equal(await page.locator("#print-area .print-page").count(), 2);
+      assert(
+        (await page.locator("#print-area").textContent()).includes(
+          "Consistent small steps",
+        ),
+      );
+      await page.emulateMedia({ media: "print" });
+      assert(await page.locator("#print-area").isVisible());
+      assert.equal(await page.locator("#main").isVisible(), false);
+      await page.emulateMedia({ media: "screen" });
+    },
+  );
+  await check(
+    "Arabic, Urdu, Malayalam, and Hindi interfaces, dark mode, and mobile width",
+    async () => {
+      for (let language of ["ar", "ur", "ml", "hi"]) {
+        await nav(page, "settings");
+        await page.locator('[data-profile="language"]').selectOption(language);
+        await page.waitForFunction(
+          (language) => document.documentElement.lang === language,
+          language,
+        );
+        assert.equal(
+          await page.locator("html").getAttribute("dir"),
+          ["ar", "ur"].includes(language) ? "rtl" : "ltr",
+        );
+        assert.equal(await page.locator("html").getAttribute("lang"), language);
+        await page.setViewportSize({ width: 390, height: 844 });
+        await nav(page, "today");
+        assert.equal(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth > innerWidth,
+          ),
+          false,
+        );
+      }
+      await nav(page, "settings");
+      await page.locator('[data-profile="language"]').selectOption("en");
+      await page.locator("#theme-select").selectOption("dark");
+      assert.equal(
+        await page.locator("html").getAttribute("data-theme"),
+        "dark",
+      );
+      await page.locator("#theme-select").selectOption("light");
+    },
+  );
+  await check(
+    "religious bundle has 15 multilingual verses and 60 explicitly graded hadiths",
+    async () => {
+      const d = await page.evaluate(() => ({
+        q: SOURCE_DATA.quran,
+        h: SOURCE_DATA.hadith,
+        az: SOURCE_DATA.adhkar.length,
+        n: SOURCE_DATA.names.length,
+      }));
+      assert.equal(d.q.length, 15);
+      assert(d.q.every((v) => v.ar && v.en && v.ur));
+      assert.equal(d.h.length, 60);
+      assert(
+        d.h.every(
+          (h) =>
+            h.ar &&
+            h.en &&
+            h.ur &&
+            h.grades.length &&
+            h.grades.every((g) =>
+              ["Sahih", "Hasan", "Hasan Sahih"].includes(g.grade),
+            ),
+        ),
+      );
+      assert.equal(d.az, 61);
+      assert.equal(d.n, 99);
+    },
+  );
+  await check(
+    "online reload replaces stale cached HTML without losing personal records",
+    async () => {
+      await page.evaluate(async () => {
+        await navigator.serviceWorker.ready;
+      });
+      await page.reload();
+      await ready(page);
+      await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+      await page.evaluate(async () => {
+        const name = (await caches.keys()).find((k) =>
+          k.startsWith("istiqamah-"),
+        );
+        const cache = await caches.open(name);
+        const current = await (await fetch("index.html")).text();
+        const stale = current.replaceAll(
+          "tasbih-adhkar",
+          "stale-adhkar-picker",
+        );
+        await cache.put(
+          "./index.html",
+          new Response(stale, { headers: { "Content-Type": "text/html" } }),
+        );
+        await cache.put(
+          "./",
+          new Response(stale, { headers: { "Content-Type": "text/html" } }),
+        );
+      });
+      await page.reload();
+      await ready(page);
+      await tool(page, "tasbih");
+      assert(await page.locator("#tasbih-adhkar").isVisible());
+      assert.equal(
+        await page.evaluate(() => Istiqamah.state.profile.name),
+        "Amina",
+      );
+      assert.equal(await page.evaluate(() => Istiqamah.state.tasbih.count), 33);
+    },
+  );
+  await check(
+    "PWA modules, fonts, and bundled readings work after an offline reload",
+    async () => {
+      await page.evaluate(async () => {
+        await navigator.serviceWorker.ready;
+      });
+      await page.reload();
+      await ready(page);
+      await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+      await context.setOffline(true);
+      await page.reload();
+      await ready(page);
+      assert.equal(await page.title(), "Istiqamah — Small deeds. Every day.");
+      await nav(page, "today");
+      assert.equal(await page.locator(".prayer-slot").count(), 5);
+      const cached = await page.evaluate(async () => {
+        const r = await fetch("data/quran.json");
+        return { ok: r.ok, bytes: (await r.arrayBuffer()).byteLength };
+      });
+      assert(cached.ok && cached.bytes > 1000);
+      await page
+        .locator('[data-action="check"][data-id="prayer-Isha"]')
+        .click();
+      await page.reload();
+      await ready(page);
+      assert(
+        await page
+          .locator('[data-action="check"][data-id="prayer-Isha"]')
+          .getAttribute("aria-pressed"),
+      );
+      await context.setOffline(false);
+    },
+  );
+  await require("./phase1.cjs")({
+    browser,
+    base,
+    check,
+    seed: await page.evaluate(() => Istiqamah.state),
+  });
+  await require('./integration.cjs')({browser,base,check,seed:await page.evaluate(()=>Istiqamah.state)});
+  await check("no browser runtime exceptions", async () =>
+    assert.deepEqual(errors, []),
+  );
+  console.log(`\n${count} browser checks passed.`);
+})()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await browser?.close();
+    server.kill();
+  });
